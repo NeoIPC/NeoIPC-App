@@ -83,8 +83,9 @@ render can take ~10 min).
 
 ## Fixtures
 
-See [`fixtures/README.md`](fixtures/README.md). Both dataset fixtures are real captures from a
-seeded stack; reset either to the `__placeholder__` sentinel and its dependent specs skip.
+See [`fixtures/README.md`](fixtures/README.md). Both report-dataset fixtures (`reference-data.json`,
+`partner-data.json`) are real captures from a seeded stack; reset either to the `__placeholder__`
+sentinel and its dependent specs skip.
 
 ## First-run notes
 

@@ -110,7 +110,10 @@ jobs:
           # which a regex built from it would interpret, and the closing `]` is what stops
           # `0.0.1` matching the `0.0.1-alpha` heading. A section ends at the next version heading
           # or at the first link-reference definition (`[x.y.z]: https://…`), so the definitions
-          # that follow the last section never become part of its release body.
+          # that follow the last section never become part of its release body. The
+          # changelog-section job in build-and-test.yml runs the same program on every pull
+          # request, so a section this would miss is found before a tag exists; the two copies
+          # are kept identical.
           section="$(awk -v want="## [$ver]" '
             index($0, want) == 1 { inside = 1; next }
             inside && index($0, "## [") == 1 { exit }

@@ -50,9 +50,10 @@ import { gotoApp, setDateField, clickGenerate } from './report-actions'
 const openLiveFetchFilters = async (page: Page): Promise<void> => {
     await gotoApp(page, '/reports/reference')
 
-    // The dataset listing is loaded before the app renders at all, so whichever
-    // of the select and the empty-listing notice is on screen is the final
-    // state rather than an interim one.
+    // The dataset listing is loaded before the app renders at all, and the page
+    // refetches it on entry; whichever of the select and the empty-listing notice
+    // is on screen once that settles is final rather than interim, because
+    // nothing writes to the stack while a spec runs (the suite pins one worker).
     const dataset = page.locator('[data-test="referenceDataId"]')
     const noDatasets = page.getByText('No reference datasets', { exact: true })
     await expect(dataset.or(noDatasets)).toBeVisible()

@@ -58,11 +58,12 @@ const STATE_FILE = path.join(AUTH_DIR, 'state.json')
 /** Cross-run state written by global setup and read by the specs. */
 export interface E2EState {
     /**
-     * The reference dataset reference-report.spec renders. Global setup reuses an
-     * already-stored dataset when the stack has one (`owned: false` — the seed's
-     * benchmark; teardown leaves it) and only uploads `reference-data.json`
-     * itself on an empty stack (`owned: true` — teardown deletes it). `null` when
-     * nothing is stored and the fixture is still a placeholder.
+     * The reference dataset reference-report.spec renders. Global setup uploads
+     * `reference-data.json` whenever the fixture is real: a 201 means it stored it
+     * (`owned: true` — teardown deletes it), a 409 means those exact bytes were
+     * already stored and the first listed dataset is reused (`owned: false` —
+     * teardown leaves it). `null` whenever the fixture is a placeholder, whatever
+     * the stack holds.
      */
     referenceFixture: { id: string; displayName: string; owned: boolean } | null
     /** displayName of each seeded department, by org-unit code (for the picker spec). */
