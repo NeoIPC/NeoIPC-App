@@ -156,6 +156,40 @@ jobs:
           fi
           echo "No Weblate-owned catalogue was modified outside Weblate."
 
+  changelog-section:
+    # package.json's version must already be described in CHANGELOG.md. The release workflow enforces
+    # the same thing, but only once a tag exists — and a tag here is immutable (the retag guard
+    # rejects a moved one), so discovering a missing section at release time costs a version number
+    # rather than an edit. Catching it on the pull request keeps it an edit.
+    name: Changelog section for this version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        # The version read below runs on the pinned Node, as the release workflow's does.
+        with:
+          node-version: 20
+      - name: CHANGELOG.md describes package.json's version
+        shell: bash
+        run: |
+          ver="$(node -p "require('./package.json').version")"
+          # Literal prefix match, as in the release workflow: a version carries `.` and `-`, which a
+          # regex built from it would interpret, and the closing `]` is what stops `0.0.1` matching
+          # the `0.0.1-alpha` heading. A section ends at the next version heading or at the first
+          # link-reference definition (`[x.y.z]: https://…`), so the definitions after the last
+          # section are not counted as its content.
+          section="$(awk -v want="## [$ver]" '
+            index($0, want) == 1 { inside = 1; next }
+            inside && index($0, "## [") == 1 { exit }
+            inside && $0 ~ /^\[[^]]+\]: / { exit }
+            inside { print }
+          ' CHANGELOG.md)"
+          if [ -z "$(printf '%s' "$section" | tr -d '[:space:]')" ]; then
+            echo "::error file=CHANGELOG.md::CHANGELOG.md has no non-empty '## [$ver]' section, but package.json declares $ver. Describe the version before releasing it."
+            exit 1
+          fi
+          echo "CHANGELOG.md documents $ver."
+
   text-hygiene:
     # LF line endings and UTF-8 without a BOM on every committed text file.
     #

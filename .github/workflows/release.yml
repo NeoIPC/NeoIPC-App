@@ -91,8 +91,9 @@ jobs:
         run: yarn build
 
       - name: Create the Release and attach the bundle
-        # Tag-driven: after a successful build, create the GitHub Release (generated notes; pre-release
-        # when the version carries a pre-release suffix, e.g. -alpha) and attach the bundle .zip.
+        # Tag-driven: after a successful build, create the GitHub Release — its body this version's
+        # CHANGELOG.md section; pre-release when the version carries a pre-release suffix, e.g. -alpha —
+        # and attach the bundle .zip.
         if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -100,12 +101,40 @@ jobs:
         shell: bash
         run: |
           tag="$GITHUB_REF_NAME"
+          ver="${tag#v}"
           pre=""; case "$tag" in *-*) pre="--prerelease";; esac
-          # Idempotent: an Actions re-run reuses the original push payload. If the Release already exists (a
-          # prior run created it), re-attach the freshly built bundle rather than failing on create.
+          # The body is this version's own CHANGELOG.md section rather than generated commit notes,
+          # and the extraction IS the gate: a missing or empty section fails the release, with no
+          # fallback to --generate-notes, which would silently restore what this replaces. The
+          # heading is matched as a literal prefix, not as a pattern — a version carries `.` and `-`,
+          # which a regex built from it would interpret, and the closing `]` is what stops
+          # `0.0.1` matching the `0.0.1-alpha` heading. A section ends at the next version heading
+          # or at the first link-reference definition (`[x.y.z]: https://…`), so the definitions
+          # that follow the last section never become part of its release body. The
+          # changelog-section job in build-and-test.yml runs the same program on every pull
+          # request, so a section this would miss is found before a tag exists; the two copies
+          # are kept identical.
+          section="$(awk -v want="## [$ver]" '
+            index($0, want) == 1 { inside = 1; next }
+            inside && index($0, "## [") == 1 { exit }
+            inside && $0 ~ /^\[[^]]+\]: / { exit }
+            inside { print }
+          ' CHANGELOG.md)"
+          if [ -z "$(printf '%s' "$section" | tr -d '[:space:]')" ]; then
+            echo "::error::CHANGELOG.md has no non-empty '## [$ver]' section. Describe this release before tagging."
+            exit 1
+          fi
+          printf '%s\n' "$section" > "$RUNNER_TEMP/release-notes.md"
+          echo "Release notes for $ver taken from CHANGELOG.md:"
+          cat "$RUNNER_TEMP/release-notes.md"
+          # Idempotent: an Actions re-run reuses the original push payload. If the Release already exists —
+          # a prior run created it, or a person published it together with the tag — give it this
+          # version's notes and re-attach the freshly built bundle rather than failing on create, so the
+          # body is the changelog section on every path and never whatever the Release was created with.
           if gh release view "$tag" >/dev/null 2>&1; then
-            echo "Release $tag already exists; re-attaching the bundle."
+            echo "Release $tag already exists; setting its notes and re-attaching the bundle."
+            gh release edit "$tag" --notes-file "$RUNNER_TEMP/release-notes.md" $pre
             gh release upload "$tag" build/bundle/*.zip --clobber
           else
-            gh release create "$tag" --generate-notes $pre build/bundle/*.zip
+            gh release create "$tag" --notes-file "$RUNNER_TEMP/release-notes.md" $pre build/bundle/*.zip
           fi

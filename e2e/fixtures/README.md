@@ -22,14 +22,16 @@ The suite keeps a graceful-degrade fallback: if either file is reset to the
 `__placeholder__` sentinel, the dependent specs **skip** instead of failing
 opaquely —
 
-- global setup **skips** the reference-data upload (records no fixture) when the
-  stack is also empty — a seeded benchmark is reused regardless;
-- `reference-report.spec.ts` and both reference-data tests in `admin-crud.spec.ts`
-  **skip** with a pointer here;
+- global setup **skips** the reference-data upload and records no fixture, whether
+  or not the stack already holds a seeded benchmark;
+- `reference-report.spec.ts` **skips** with a pointer here, and so does each
+  reference-data test in `admin-crud.spec.ts` when the fixture it keys off is the
+  placeholder — `reference-data.json` for the duplicate-rejection test,
+  `reference-data-crud.json` for the list upload/delete;
 - `partner-report-data-file.spec.ts` **skips**.
 
-The other specs (nav-authority, org-unit-picker, partner-report-online,
-locale-switch, and the validation-exceptions half of admin-crud) run regardless.
+Every other spec runs regardless — `reference-report-live-fetch.spec.ts` included,
+which takes the empty-listing branch when the stack holds no dataset at all.
 
 ## How to re-capture
 

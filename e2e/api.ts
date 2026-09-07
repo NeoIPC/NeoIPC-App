@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import type { APIRequestContext } from '@playwright/test'
+import { TEST_UNITS_GROUP_CODE } from '../src/config/dhis2Constants'
 import { AUTH_DIR } from './users'
 
 /**
@@ -57,11 +58,12 @@ const STATE_FILE = path.join(AUTH_DIR, 'state.json')
 /** Cross-run state written by global setup and read by the specs. */
 export interface E2EState {
     /**
-     * The reference dataset reference-report.spec renders. Global setup reuses an
-     * already-stored dataset when the stack has one (`owned: false` — the seed's
-     * benchmark; teardown leaves it) and only uploads `reference-data.json`
-     * itself on an empty stack (`owned: true` — teardown deletes it). `null` when
-     * nothing is stored and the fixture is still a placeholder.
+     * The reference dataset reference-report.spec renders. Global setup uploads
+     * `reference-data.json` whenever the fixture is real: a 201 means it stored it
+     * (`owned: true` — teardown deletes it), a 409 means those exact bytes were
+     * already stored and the first listed dataset is reused (`owned: false` —
+     * teardown leaves it). `null` whenever the fixture is a placeholder, whatever
+     * the stack holds.
      */
     referenceFixture: { id: string; displayName: string; owned: boolean } | null
     /** displayName of each seeded department, by org-unit code (for the picker spec). */
@@ -118,15 +120,68 @@ export async function installApp(
  * does not create it (seeding stays in `Initialize-TestDhis2.ps1`).
  */
 export async function assertSeeded(ctx: APIRequestContext): Promise<void> {
-    for (const code of ['AT_TEST_TEST', 'CH_TEST_TEST']) {
+    // AT_TEST_TEST2 is as required as the other two: the reference-report
+    // live-fetch spec needs a department inside TEST_UNITS to observe the
+    // exclusion admitting one, and global setup reads its display name. The
+    // seeder's -TestUnitDepartmentCodes accepts an empty list, so a stack
+    // without it is a reachable configuration — and without this check the
+    // failure is a bare lookup error in setup that names neither the seeder
+    // nor the flag, and takes every spec on every engine down with it.
+    // The specs depend on TEST_UNITS *membership*, not merely on the departments
+    // existing, and each code is wanted in its state for a reason of its own,
+    // so the reason travels with the expectation into the failure message.
+    // Existence and membership fail differently and both are checked here,
+    // because a stack where AT_TEST_TEST2 exists outside the group — or where
+    // AT_TEST_TEST or CH_TEST_TEST has been added to it — passes an existence
+    // check and then fails inside a spec on an option list or a collapsed
+    // picker, naming neither the group nor the seeder. That two of the three
+    // dependencies are on a property being *absent* is exactly the kind nothing
+    // greps for, so they are asserted rather than assumed.
+    const partnerPickerDefault =
+        'the Partner Report form drops TEST_UNITS members from its department picker unless "Include test data" is checked'
+    const wantTestUnit: Record<string, { testUnit: boolean; because: string }> = {
+        AT_TEST_TEST: {
+            testUnit: false,
+            because: `${partnerPickerDefault}, and the org-unit-picker and partner-report specs reach AT_TEST_TEST through it; the reference-report live-fetch spec also reads the exclusion by AT_TEST_TEST staying on offer`,
+        },
+        AT_TEST_TEST2: {
+            testUnit: true,
+            because: 'the reference-report live-fetch spec needs a TEST_UNITS member that "Include test data" admits to the Departments picker',
+        },
+        CH_TEST_TEST: {
+            testUnit: false,
+            because: `${partnerPickerDefault}, and the org-unit-picker spec reaches CH_TEST_TEST through it as the CH report user`,
+        },
+    }
+    for (const [code, { testUnit: shouldBeTestUnit, because }] of Object.entries(
+        wantTestUnit
+    )) {
         const res = await ctx.get('/api/organisationUnits', {
-            params: { filter: `code:eq:${code}`, fields: 'id' },
+            params: {
+                filter: `code:eq:${code}`,
+                fields: 'id,organisationUnitGroups[code]',
+            },
         })
         await ensureOk(res, `seed check (org unit ${code})`)
-        const body = (await res.json()) as { organisationUnits?: unknown[] }
-        if (!body.organisationUnits?.length) {
+        // `code` is nullable on a group, as `src/forms/fields/orgUnits.ts` types
+        // it: a group without one is simply not the group being looked for.
+        const body = (await res.json()) as {
+            organisationUnits?: {
+                organisationUnitGroups?: { code: string | null }[]
+            }[]
+        }
+        const unit = body.organisationUnits?.[0]
+        if (!unit) {
             throw new Error(
                 `seed missing: no org unit with code ${code}. Seed the stack with Initialize-TestDhis2.ps1 first.`
+            )
+        }
+        const isTestUnit = (unit.organisationUnitGroups ?? []).some(
+            (g) => g.code === TEST_UNITS_GROUP_CODE
+        )
+        if (isTestUnit !== shouldBeTestUnit) {
+            throw new Error(
+                `seed shape wrong: ${code} is ${isTestUnit ? '' : 'not '}in the ${TEST_UNITS_GROUP_CODE} group, but it must be ${shouldBeTestUnit ? 'in' : 'out of'} that group: ${because}. Re-seed with Initialize-TestDhis2.ps1 (its -TestUnitDepartmentCodes controls this).`
             )
         }
     }

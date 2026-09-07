@@ -6,7 +6,8 @@ import { deleteReferenceData, readState } from './api'
  * Delete the reference-dataset fixture that global setup uploaded. Best-effort:
  * a missing state file (setup never completed) or an already-gone fixture must
  * not fail the run. A dataset global setup *reused* rather than uploaded
- * (`owned:false` — the seed's benchmark) is left in place.
+ * (`owned:false` — the first dataset the listing returned, reused because those
+ * bytes were already stored) is left in place.
  */
 async function globalTeardown(): Promise<void> {
     let fixtureId: string
