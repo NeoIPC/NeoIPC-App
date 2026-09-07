@@ -10,6 +10,8 @@ Unreleased until it is versioned.
 
 ## [Unreleased]
 
+## [0.1.0-alpha] - 2026-09-07
+
 ### Added
 
 - A JSON download of the partner data the reporting service computes for the chosen department and
@@ -63,5 +65,6 @@ First published version.
   target languages hold a single translated label (German) in this version, so the interface is in
   practice English.
 
-[Unreleased]: https://github.com/NeoIPC/NeoIPC-App/compare/v0.0.1-alpha...HEAD
+[Unreleased]: https://github.com/NeoIPC/NeoIPC-App/compare/v0.1.0-alpha...HEAD
+[0.1.0-alpha]: https://github.com/NeoIPC/NeoIPC-App/compare/v0.0.1-alpha...v0.1.0-alpha
 [0.0.1-alpha]: https://github.com/NeoIPC/NeoIPC-App/releases/tag/v0.0.1-alpha

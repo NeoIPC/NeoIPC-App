@@ -1,6 +1,6 @@
 {
   "name": "neoipc-app",
-  "version": "0.0.1-alpha",
+  "version": "0.1.0-alpha",
   "description": "DHIS2 App Platform application for the NeoIPC Project",
   "license": "MIT",
   "private": true,
