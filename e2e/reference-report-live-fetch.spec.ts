@@ -177,9 +177,14 @@ test.describe('reference report — admin live-fetch filters', () => {
         await page.locator('input[name="testUnitFilter"]').check()
 
         await page.locator('[data-test="departmentFilter"]').click()
+        // Exact, unlike the sibling test's substring matching over the whole menu:
+        // that one guards the pair at runtime (`not.toContain`, both ways) before it
+        // relies on containment, and this one has no such guard. The labels here are
+        // bare display names — `showParentInLabel` is off for this form — so an exact
+        // match is available and costs nothing.
         await page
             .locator('#dhis2-portal-root')
-            .getByText(orgUnitDisplayNames.AT_TEST_TEST, { exact: false })
+            .getByText(orgUnitDisplayNames.AT_TEST_TEST, { exact: true })
             .first()
             .click()
         await page.keyboard.press('Escape')
