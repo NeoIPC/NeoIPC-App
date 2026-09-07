@@ -87,11 +87,12 @@ async function globalSetup(): Promise<void> {
 
         // Ensure `reference-data.json`'s content is stored: reference-report.spec
         // renders a saved dataset, and the admin-crud 409 test relies on those
-        // exact bytes already being present. Upload it — a 409 means it is already
-        // stored (the seed's benchmark), so reuse an existing dataset for the render
-        // spec (owned:false, teardown leaves it); a 201 means we stored it
-        // (owned:true, teardown deletes it). Skip only when the fixture is still a
-        // placeholder (reference-report.spec then skips — see e2e/fixtures/README.md).
+        // exact bytes already being present. Upload it — a 409 means those bytes are
+        // already stored, by the seed or by a run whose teardown never ran, so reuse
+        // the first listed dataset for the render spec (owned:false, teardown leaves
+        // it); a 201 means we stored it (owned:true, teardown deletes it). Skip only
+        // when the fixture is still a placeholder (reference-report.spec then skips —
+        // see e2e/fixtures/README.md).
         let referenceFixture: E2EState['referenceFixture'] = null
         if (!isPlaceholderFixture(REFERENCE_DATA_FIXTURE)) {
             const displayName = `e2e-reference-${Date.now().toString(36)}`

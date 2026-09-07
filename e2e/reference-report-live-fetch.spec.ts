@@ -52,8 +52,9 @@ const openLiveFetchFilters = async (page: Page): Promise<void> => {
 
     // The dataset listing is loaded before the app renders at all, and the page
     // refetches it on entry; whichever of the select and the empty-listing notice
-    // is on screen once that settles is final rather than interim, because
-    // nothing writes to the stack while a spec runs (the suite pins one worker).
+    // is on screen once that settles is final rather than interim, because no
+    // other spec writes to the stack while this one runs (the suite pins one
+    // worker).
     const dataset = page.locator('[data-test="referenceDataId"]')
     const noDatasets = page.getByText('No reference datasets', { exact: true })
     await expect(dataset.or(noDatasets)).toBeVisible()
