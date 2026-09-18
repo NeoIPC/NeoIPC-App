@@ -97,7 +97,15 @@ export interface PartnerReportFormValues {
     outputFormat: OutputFormat
 }
 
-const defaultValues: PartnerReportFormValues = {
+/**
+ * The form's initial values; the `default` preset restores the
+ * content-governing ones among them. A field the request always carries
+ * must default to what the report schema declares, or an untouched form
+ * would render something other than the report's own default;
+ * `formDefaults.test.ts` checks every field with a schema default against
+ * these values.
+ */
+export const defaultValues: PartnerReportFormValues = {
     mode: 'online',
     dataFile: null,
     referenceDataFile: '',
