@@ -8,12 +8,12 @@ import { defaultValues as partnerDefaults } from './PartnerReportForm'
 import { defaultValues as referenceDefaults } from './ReferenceReportForm'
 
 /**
- * The `default` preset is the form's initial values, sent as the request
- * the query builders produce. For every field whose schema states a
- * default, that request must either omit the field — the form default is
- * "unset" (`null` or `''`), so the report applies its own default — or
- * carry exactly the schema's value. A form default that disagrees with
- * the schema changes what the preset renders, silently, which is what
+ * An untouched form sends its initial values as the request the query
+ * builders produce. For every field whose schema states a default, that
+ * request must either omit the field — the form default is "unset"
+ * (`null` or `''`), so the report applies its own default — or carry
+ * exactly the schema's value. A form default that disagrees with the
+ * schema changes what an untouched form renders, silently, which is what
  * this test turns into a failure. The schema-drift script compares the
  * field *names*; this is the check on their *values*.
  */
