@@ -10,6 +10,13 @@ Unreleased until it is versioned.
 
 ## [Unreleased]
 
+### Added
+
+- A test that fails when a report form's default value disagrees with the report schema's default
+  for a field the default request sends, so the `default` preset cannot silently render something
+  other than the report's own default. Fields the form leaves unset are held to being omitted from
+  the request instead.
+
 ## [0.1.0-alpha] - 2026-09-07
 
 ### Added

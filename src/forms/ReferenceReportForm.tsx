@@ -80,7 +80,13 @@ export interface ReferenceReportFormValues {
     outputFormat: 'html' | 'pdf'
 }
 
-const defaultValues: ReferenceReportFormValues = {
+/**
+ * The form's initial values, which are also what the `default` preset
+ * restores. A field the request always carries must default to what the
+ * report schema declares, or the preset would render something other than
+ * the report's own default; `formDefaults.test.ts` holds the two to that.
+ */
+export const defaultValues: ReferenceReportFormValues = {
     referenceDataId: '',
     reportingPeriodFrom: '',
     reportingPeriodTo: '',
