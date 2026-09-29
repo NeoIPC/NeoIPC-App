@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-09-29T17:29:50.329Z\n"
-"PO-Revision-Date: 2026-09-29T17:29:50.330Z\n"
+"POT-Creation-Date: 2026-09-29T21:27:49.217Z\n"
+"PO-Revision-Date: 2026-09-29T21:27:49.218Z\n"
 
 msgid "Upload"
 msgstr "Upload"
@@ -179,6 +179,9 @@ msgstr "Rate"
 
 msgid "None"
 msgstr "None"
+
+msgid "Data validation summary table"
+msgstr "Data validation summary table"
 
 msgid "Birth weight figure"
 msgstr "Birth weight figure"
@@ -508,6 +511,13 @@ msgstr "The start date must not be after the end date."
 msgid "Select at least one validation rule."
 msgstr "Select at least one validation rule."
 
+msgid ""
+"All departments in your scope are test units. Turn on \"Include test data\" "
+"under More options to select them."
+msgstr ""
+"All departments in your scope are test units. Turn on \"Include test data\" "
+"under More options to select them."
+
 msgid "Leave empty to validate every department you can see."
 msgstr "Leave empty to validate every department you can see."
 
@@ -519,6 +529,9 @@ msgstr "The rule list could not be loaded"
 
 msgid "The report applies every rule."
 msgstr "The report applies every rule."
+
+msgid "Loading the validation rules"
+msgstr "Loading the validation rules"
 
 msgid "Select all"
 msgstr "Select all"

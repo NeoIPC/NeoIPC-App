@@ -29,6 +29,7 @@ export const partnerReportWireFields = [
     'includeIntroductionTexts',
     'includeMethodsTexts',
     'includeOutlierInterpretation',
+    'includeValidationSummaryTable',
     'includeBirthWeightFigure',
     'includeGestationalAgeFigure',
     'includeIncidenceDensityTable',

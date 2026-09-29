@@ -30,6 +30,7 @@ const partnerValues = (
     includeIntroductionTexts: true,
     includeMethodsTexts: true,
     includeOutlierInterpretation: true,
+    includeValidationSummaryTable: false,
     includeBirthWeightFigure: false,
     includeGestationalAgeFigure: false,
     includeIncidenceDensityTable: false,
@@ -66,6 +67,7 @@ const referenceValues = (
     confidenceIntervals: '',
     includeIntroductionTexts: true,
     includeMethodsTexts: true,
+    includeValidationSummaryTable: false,
     includeBirthWeightFigure: false,
     includeGestationalAgeFigure: false,
     includeIncidenceDensityTable: false,
@@ -146,6 +148,9 @@ describe('buildPartnerReportQuery', () => {
 
         expect(qs.get('includeBirthWeightFigure')).toBe('true')
         expect(qs.get('includeSecondaryBsiRateTable')).toBe('false')
+        // The report shows its validation summary when the flag is absent, so
+        // an unchecked box has to go out as `false` to take the table away.
+        expect(qs.get('includeValidationSummaryTable')).toBe('false')
     })
 
     it('drops confidenceIntervals when unset, includes it when chosen', () => {
@@ -250,6 +255,7 @@ describe('buildReferenceReportQuery', () => {
         expect(qs.has('defaultPatientFilter')).toBe(false)
         // content flags are not live-fetch filters → still sent
         expect(qs.get('includeIncidenceDensityTable')).toBe('true')
+        expect(qs.get('includeValidationSummaryTable')).toBe('false')
     })
 
     it('emits includeX content flags and fragmentMode for html', () => {

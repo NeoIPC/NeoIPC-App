@@ -49,14 +49,15 @@ export const confidenceIntervalModeLabel = (
 }
 
 /**
- * The per-element content-toggle keys shared by both report forms. Each
- * is an `includeX` boolean render flag (a figure or table the report
- * can include or omit); Partner and Reference expose the same 13
- * elements, so one list drives both forms' content checkboxes. These
- * are exactly the `boolean` `includeX` keys of `PartnerReportFormValues`
- * / `ReferenceReportFormValues`.
+ * The per-element content-toggle keys shared by the Partner and Reference
+ * forms. Each is an `includeX` boolean render flag (a figure or table the
+ * report can include or omit); the two reports expose the same elements,
+ * so one list drives both forms' content checkboxes, in the order the
+ * reports place them. These are exactly the `boolean` `includeX` keys of
+ * `PartnerReportFormValues` / `ReferenceReportFormValues`.
  */
 export const includeElementKeys = [
+    'includeValidationSummaryTable',
     'includeBirthWeightFigure',
     'includeGestationalAgeFigure',
     'includeIncidenceDensityTable',
@@ -83,6 +84,8 @@ export type IncludeElementKey = (typeof includeElementKeys)[number]
  */
 export const includeElementLabel = (key: IncludeElementKey): string => {
     switch (key) {
+        case 'includeValidationSummaryTable':
+            return i18n.t('Data validation summary table')
         case 'includeBirthWeightFigure':
             return i18n.t('Birth weight figure')
         case 'includeGestationalAgeFigure':

@@ -80,6 +80,7 @@ export interface PartnerReportFormValues {
     includeIntroductionTexts: boolean
     includeMethodsTexts: boolean
     includeOutlierInterpretation: boolean
+    includeValidationSummaryTable: boolean
     includeBirthWeightFigure: boolean
     includeGestationalAgeFigure: boolean
     includeIncidenceDensityTable: boolean
@@ -123,6 +124,7 @@ export const defaultValues: PartnerReportFormValues = {
     includeIntroductionTexts: true,
     includeMethodsTexts: true,
     includeOutlierInterpretation: false,
+    includeValidationSummaryTable: true,
     includeBirthWeightFigure: true,
     includeGestationalAgeFigure: true,
     includeIncidenceDensityTable: true,

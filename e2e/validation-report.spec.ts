@@ -17,6 +17,9 @@ import {
  * AT_TEST_TEST, a department outside the test-unit group, so the picker offers
  * it without "Include test data".
  */
+/** The department picker on this form: an optional filter, which never collapses. */
+const DEPARTMENT_PICKER = { fieldName: 'departmentFilter', collapses: false }
+
 test.describe('validation report', () => {
     test.use({ storageState: userByKey('atReport').storageState })
 
@@ -25,7 +28,7 @@ test.describe('validation report', () => {
     }) => {
         const { orgUnitDisplayNames } = readState()
         await gotoApp(page, '/reports/validation')
-        await selectDepartment(page, orgUnitDisplayNames.AT_TEST_TEST, 'departmentFilter')
+        await selectDepartment(page, orgUnitDisplayNames.AT_TEST_TEST, DEPARTMENT_PICKER)
         await setOutputFormat(page, 'html')
 
         const [request] = await Promise.all([
@@ -34,9 +37,13 @@ test.describe('validation report', () => {
             ),
             clickGenerate(page),
         ])
-        expect(request.url()).toContain('departmentFilter=AT_TEST_TEST')
+        const qs = new URL(request.url()).searchParams
+        // Exact membership, because `AT_TEST_TEST` is a strict prefix of
+        // `AT_TEST_TEST2`: a substring check would also pass for the wrong
+        // department, or for a request carrying both.
+        expect(qs.getAll('departmentFilter')).toEqual(['AT_TEST_TEST'])
         // Every rule is selected, which the request leaves to the report.
-        expect(request.url()).not.toContain('rules=')
+        expect(qs.has('rules')).toBe(false)
 
         const report = await expectRenderedReport(page)
         // The header names the rules the document rests on.
@@ -46,7 +53,7 @@ test.describe('validation report', () => {
     test('PDF output triggers a PDF download', async ({ page }) => {
         const { orgUnitDisplayNames } = readState()
         await gotoApp(page, '/reports/validation')
-        await selectDepartment(page, orgUnitDisplayNames.AT_TEST_TEST, 'departmentFilter')
+        await selectDepartment(page, orgUnitDisplayNames.AT_TEST_TEST, DEPARTMENT_PICKER)
         await setOutputFormat(page, 'pdf')
 
         const download = await expectDownload(page, () => clickGenerate(page))
@@ -58,7 +65,7 @@ test.describe('validation report', () => {
     test('an unchecked rule is left out of the request', async ({ page }) => {
         const { orgUnitDisplayNames } = readState()
         await gotoApp(page, '/reports/validation')
-        await selectDepartment(page, orgUnitDisplayNames.AT_TEST_TEST, 'departmentFilter')
+        await selectDepartment(page, orgUnitDisplayNames.AT_TEST_TEST, DEPARTMENT_PICKER)
         await setOutputFormat(page, 'html')
 
         await page.getByRole('button', { name: 'More options' }).click()

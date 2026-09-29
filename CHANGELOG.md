@@ -24,6 +24,10 @@ Unreleased until it is versioned.
   rule is applied until the user narrows the selection, and "Select all" and "Clear all" reset it.
   Administrators can also include the test departments. The page needs NeoIPC-Reporting with the
   `/validation-report` endpoints.
+- A "Data validation summary table" content toggle on the Partner and Reference Report forms, for
+  the table the reports show first after their header. It is on by default and follows the content
+  presets like the other tables; it needs a NeoIPC-Reporting that accepts
+  `includeValidationSummaryTable`.
 
 ## [0.1.0-alpha] - 2026-09-07
 

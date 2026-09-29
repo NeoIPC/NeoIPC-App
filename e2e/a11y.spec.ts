@@ -20,7 +20,9 @@ import { expectNoNewA11yViolations } from './a11y'
  * fallback — so the audit could run against the loading spinner. And
  * `CollapsibleSection` renders `{open && children}`, so a collapsed section's
  * subtree is genuinely absent from the DOM rather than hidden; every section
- * starts collapsed, which would leave the bulk of both report forms unaudited.
+ * starts collapsed, which would leave the bulk of the report forms unaudited.
+ * A section can also hold a loader of its own, so what an expansion reveals is
+ * waited on as well as what the route paints first.
  */
 async function revealRouteContent(page: Page): Promise<void> {
     // The routed page owns the only <h1>; the shell chrome has none.
@@ -32,9 +34,8 @@ async function revealRouteContent(page: Page): Promise<void> {
     // barrier. Both admin pages render a CircularLoader while their data is in
     // flight, so its absence is the settle that makes their coverage as real as
     // the report routes'.
-    await expect(
-        page.locator('main [data-test="dhis2-uicore-circularloader"]')
-    ).toHaveCount(0)
+    const loaders = page.locator('main [data-test="dhis2-uicore-circularloader"]')
+    await expect(loaders).toHaveCount(0)
 
     // Expand every collapsed disclosure, re-querying each pass because expanding
     // one section can reveal another nested inside it. Each click expands exactly
@@ -49,6 +50,13 @@ async function revealRouteContent(page: Page): Promise<void> {
         await expect(expanded).toHaveCount(expandedBefore + 1)
     }
     await expect(collapsed).toHaveCount(0)
+
+    // The check above cannot see a loader inside a section that was still
+    // collapsed: the Validation Report fetches its rule list when the form
+    // mounts, but the list and its loader live in "More options". Settle again
+    // on what the expansion revealed, so the audit scans the rules rather than
+    // their spinner.
+    await expect(loaders).toHaveCount(0)
 }
 
 test.describe('accessibility — axe / WCAG 2.1 AA', () => {

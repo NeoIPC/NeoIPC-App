@@ -5,16 +5,18 @@ import {
     Card,
     CheckboxField,
     CircularLoader,
+    Help,
     NoticeBox,
     Radio,
     SingleSelectField,
     SingleSelectOption,
 } from '@dhis2/ui'
-import React, { FC, useMemo, useState } from 'react'
+import React, { FC, useId, useMemo, useState } from 'react'
 import { useAuthorities } from '../authority/useAuthorities'
 import { DEPARTMENT_GROUP_CODE, TEST_UNITS_GROUP_CODE } from '../config/dhis2Constants'
 import CollapsibleSection from './CollapsibleSection'
 import OrganisationUnitMultiSelect from './fields/OrganisationUnitMultiSelect'
+import { OrgUnitRow, allCodedUnitsExcluded } from './fields/orgUnits'
 import { languageLabel } from './languageLabel'
 import { hasErrors, validateValidationReport } from './reportValidation'
 import { useReportConfig } from './useReportConfig'
@@ -63,7 +65,9 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
     const { locales } = useReportConfig('validation-report', { presets: false })
     const { rules: catalogue, error: catalogueError } = useValidationRules()
     const { isAdmin } = useAuthorities()
+    const rulesErrorId = useId()
     const [values, setValues] = useState<ValidationReportFormValues>(defaultValues)
+    const [deptRows, setDeptRows] = useState<OrgUnitRow[]>([])
     // Client-side preconditions are only surfaced after the first Generate
     // attempt, then re-evaluated live as the user fixes each field.
     const [submitAttempted, setSubmitAttempted] = useState(false)
@@ -74,6 +78,10 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
 
     const hasLanguageChoice = (locales?.length ?? 0) > 1
     const allIds = useMemo(() => (catalogue ?? []).map((rule) => rule.id), [catalogue])
+    // An empty catalogue offers nothing to choose, so it is treated like one
+    // that failed to load: the request leaves `rules` out and the report
+    // applies its own full set.
+    const catalogueUnavailable = catalogueError !== null || catalogue?.length === 0
 
     const setField = <K extends keyof ValidationReportFormValues>(key: K) =>
         (value: ValidationReportFormValues[K]) =>
@@ -100,6 +108,13 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
     const departmentExcludeGroups = useMemo(
         () => (values.includeTestData ? [] : [TEST_UNITS_GROUP_CODE]),
         [values.includeTestData]
+    )
+    // When the user's whole department scope is test units, the picker is
+    // empty and an empty picker would validate no department at all rather
+    // than every one, so say why instead of leaving a blank control.
+    const noSelectableDepartments = useMemo(
+        () => allCodedUnitsExcluded(deptRows, departmentExcludeGroups),
+        [deptRows, departmentExcludeGroups]
     )
 
     return (
@@ -133,6 +148,17 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
 
             <Card>
                 <h2>{i18n.t('Departments')}</h2>
+                {noSelectableDepartments && (
+                    <NoticeBox warning title={i18n.t('No selectable departments')}>
+                        {isAdmin
+                            ? i18n.t(
+                                  'All departments in your scope are test units. Turn on "Include test data" under More options to select them.'
+                              )
+                            : i18n.t(
+                                  'All departments in your scope are test units, which are excluded from reports. Ask an administrator to include test data.'
+                              )}
+                    </NoticeBox>
+                )}
                 <OrganisationUnitMultiSelect
                     name="departmentFilter"
                     label={i18n.t('Departments')}
@@ -140,6 +166,7 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
                     excludeGroupCodes={departmentExcludeGroups}
                     selectedCodes={values.departmentFilter}
                     onChange={setField('departmentFilter')}
+                    onRowsLoaded={setDeptRows}
                     helpText={i18n.t(
                         'Leave empty to validate every department you can see.'
                     )}
@@ -150,15 +177,25 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
                 title={i18n.t('More options')}
                 forceOpen={Boolean(errors.rules)}
             >
-                <fieldset>
+                <fieldset aria-describedby={errors.rules ? rulesErrorId : undefined}>
                     <legend>{i18n.t('Validation rules')}</legend>
-                    {catalogueError && (
+                    {errors.rules && (
+                        <div id={rulesErrorId}>
+                            <Help error>{errors.rules}</Help>
+                        </div>
+                    )}
+                    {catalogueUnavailable && (
                         <NoticeBox warning title={i18n.t('The rule list could not be loaded')}>
                             {i18n.t('The report applies every rule.')}
                         </NoticeBox>
                     )}
-                    {catalogue === null && !catalogueError && <CircularLoader small />}
-                    {catalogue !== null && (
+                    {catalogue === null && !catalogueError && (
+                        <CircularLoader
+                            small
+                            aria-label={i18n.t('Loading the validation rules')}
+                        />
+                    )}
+                    {catalogue !== null && catalogue.length > 0 && (
                         <>
                             <ButtonStrip>
                                 <Button
@@ -181,8 +218,22 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
                                     <CheckboxField
                                         key={rule.id}
                                         name={`rule-${rule.id}`}
-                                        label={i18n.t('Rule {{id}}', { id: rule.id })}
-                                        helpText={rule.summary}
+                                        className={styles.ruleField}
+                                        // The summary sits inside the label, not in
+                                        // `helpText`: @dhis2/ui renders help text as a
+                                        // sibling paragraph nothing links to the input,
+                                        // which would leave every checkbox named only
+                                        // "Rule N" to assistive technology.
+                                        label={
+                                            <span className={styles.ruleLabel}>
+                                                <span>
+                                                    {i18n.t('Rule {{id}}', { id: rule.id })}
+                                                </span>{' '}
+                                                <span className={styles.ruleSummary}>
+                                                    {rule.summary}
+                                                </span>
+                                            </span>
+                                        }
                                         checked={isRuleSelected(rule.id)}
                                         onChange={({ checked }) => toggleRule(rule.id, checked)}
                                     />

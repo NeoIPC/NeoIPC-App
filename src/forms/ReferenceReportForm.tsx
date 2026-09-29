@@ -63,6 +63,7 @@ export interface ReferenceReportFormValues {
     confidenceIntervals: ConfidenceIntervalMode | ''
     includeIntroductionTexts: boolean
     includeMethodsTexts: boolean
+    includeValidationSummaryTable: boolean
     includeBirthWeightFigure: boolean
     includeGestationalAgeFigure: boolean
     includeIncidenceDensityTable: boolean
@@ -104,6 +105,7 @@ export const defaultValues: ReferenceReportFormValues = {
     confidenceIntervals: '',
     includeIntroductionTexts: true,
     includeMethodsTexts: true,
+    includeValidationSummaryTable: true,
     includeBirthWeightFigure: true,
     includeGestationalAgeFigure: true,
     includeIncidenceDensityTable: true,

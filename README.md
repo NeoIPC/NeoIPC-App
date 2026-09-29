@@ -22,6 +22,9 @@ that system for the people who take part in it.
   Reference Report — choose an organisation unit, a period and the content to include,
   then render inline or download a PDF. A report can also be rendered from an uploaded
   data file rather than live from DHIS2.
+- **A Validation Report form**, which checks the chosen departments' surveillance records
+  against the validation rules — all of them, or a few picked from a list that says what
+  each one checks — and renders the result inline or downloads it as a PDF.
 - **Administration** of the reference datasets reports are benchmarked against and of the
   validation-exception file.
 - **A role-filtered shell.** The left navigation shows only what the signed-in user may
@@ -116,8 +119,10 @@ in every language, so filling one in is a genuinely valuable, self-contained con
 Please do **not** edit `i18n/*.po` here and open a pull request. Weblate is the only writer of
 those files: it commits translations back itself, so a change made here is either overwritten or
 turns into a conflict. The template they are generated from, `i18n/en.pot`, belongs to this
-repository — it is produced from the source by `yarn i18n:extract`, and `yarn build` bundles the
-translated catalogues into the app.
+repository — `yarn build` produces it from the source and bundles the translated catalogues into
+the app. `yarn i18n:extract` alone is not a substitute: it leaves out the app title, its
+description and the command-palette shortcuts, which only an extraction run as part of `build` or
+`start` adds.
 
 The surveillance content the reports themselves carry — the protocol, the report text, the
 infectious-agent names — is translated on the same Weblate project, under its own components.

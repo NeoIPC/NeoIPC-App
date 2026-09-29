@@ -8,7 +8,8 @@ import type { ValidationReportFormValues } from '../forms/ValidationReportForm'
 /**
  * What the user picked in the form's "Output format" radio. Drives the
  * `Accept` header on the request and the post-response branch in
- * {@link renderPartnerReport} / {@link renderReferenceReport}.
+ * {@link renderPartnerReport} / {@link renderReferenceReport} /
+ * {@link renderValidationReport}.
  */
 export type OutputFormat = 'html' | 'pdf' | 'json'
 

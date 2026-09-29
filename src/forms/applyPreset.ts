@@ -2,7 +2,7 @@ import { PresetOverrides } from '../api/reportConfig'
 import { includeElementKeys } from './enums'
 
 /**
- * The content fields a preset governs: the 13 `includeX` figure/table
+ * The content fields a preset governs: the `includeX` figure/table
  * flags plus the confidence-interval mode and the two section-text
  * toggles. While a non-Custom preset is selected, the form locks these
  * controls; "Custom" unlocks them. Shared by both report forms (the

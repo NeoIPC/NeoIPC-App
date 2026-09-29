@@ -25,7 +25,7 @@ interface OrganisationUnitMultiSelectProps {
      * Optional org-unit group codes to *exclude* from the pickable
      * options — the complement of {@link groupCode}'s include filter. A
      * row belonging to any of these groups is dropped from the list and
-     * reconciled out of the current selection. Both report forms pass
+     * reconciled out of the current selection. The report forms pass
      * `TEST_UNITS` on their department picker unless "Include test data"
      * is on, so test departments are only offered (and stay selected)
      * when the data layer would actually include them.
@@ -87,9 +87,9 @@ interface OrganisationUnitMultiSelectProps {
  * Role is identified by group membership, not hierarchy level — see
  * `dhis2Constants` for why level is not a stable contract.
  *
- * Values are orgUnit `code` strings — the wire format
- * `Partner-/Reference-Report`'s `UnitCodes` / `CountryFilter` /
- * `DepartmentFilter` parameters expect. OrgUnits without a `code` are
+ * Values are orgUnit `code` strings — the wire format the reports'
+ * `UnitCodes` / `CountryFilter` / `DepartmentFilter` parameters expect
+ * (Partner, Reference and Validation Report). OrgUnits without a `code` are
  * filtered out (un-pickable) and a `NoticeBox` warning is rendered
  * alongside the select so operators know to ask the NeoIPC metadata
  * maintainers to add the missing codes upstream.
