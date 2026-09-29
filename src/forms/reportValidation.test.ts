@@ -1,9 +1,11 @@
 import type { PartnerReportFormValues } from './PartnerReportForm'
 import type { ReferenceReportFormValues } from './ReferenceReportForm'
+import type { ValidationReportFormValues } from './ValidationReportForm'
 import {
     hasErrors,
     validatePartnerReport,
     validateReferenceReport,
+    validateValidationReport,
 } from './reportValidation'
 
 const makePartner = (
@@ -184,5 +186,27 @@ describe('validateReferenceReport', () => {
 
     it('passes a well-formed live-fetch form', () => {
         expect(hasErrors(validateReferenceReport(makeReference()))).toBe(false)
+    })
+})
+
+describe('validateValidationReport', () => {
+    const makeValidation = (
+        over: Partial<ValidationReportFormValues> = {}
+    ): ValidationReportFormValues => ({
+        departmentFilter: [],
+        rules: null,
+        includeTestData: false,
+        locale: '',
+        outputFormat: 'html',
+        ...over,
+    })
+
+    it('flags a selection of no rule', () => {
+        expect(validateValidationReport(makeValidation({ rules: [] })).rules).toBeTruthy()
+    })
+
+    it('passes every rule and a selection of some', () => {
+        expect(hasErrors(validateValidationReport(makeValidation()))).toBe(false)
+        expect(hasErrors(validateValidationReport(makeValidation({ rules: [25] })))).toBe(false)
     })
 })

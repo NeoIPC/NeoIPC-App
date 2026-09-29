@@ -54,6 +54,7 @@ const config = {
     shortcuts: [
         { name: 'Partner Report', url: '#/reports/partner' },
         { name: 'Reference Report', url: '#/reports/reference' },
+        { name: 'Validation Report', url: '#/reports/validation' },
         { name: 'Reference data', url: '#/admin/reference-data' },
         { name: 'Validation exceptions', url: '#/admin/validation-exceptions' },
     ],

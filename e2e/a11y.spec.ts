@@ -61,7 +61,11 @@ test.describe('accessibility — axe / WCAG 2.1 AA', () => {
 
     test.describe('report user (play.at.report1)', () => {
         test.use({ storageState: userByKey('atReport').storageState })
-        for (const route of ['/reports/partner', '/reports/reference']) {
+        for (const route of [
+            '/reports/partner',
+            '/reports/reference',
+            '/reports/validation',
+        ]) {
             test(`no new violations: ${route}`, async ({ page }, testInfo) => {
                 await gotoApp(page, route)
                 await revealRouteContent(page)
@@ -75,6 +79,7 @@ test.describe('accessibility — axe / WCAG 2.1 AA', () => {
         for (const route of [
             '/reports/partner',
             '/reports/reference',
+            '/reports/validation',
             '/admin/reference-data',
             '/admin/validation-exceptions',
         ]) {

@@ -18,12 +18,23 @@ export interface ReportConfig {
     error: Error | null
 }
 
+/** What {@link useReportConfig} fetches besides the locales. */
+export interface ReportConfigOptions {
+    /** Fetch the content presets; `false` for a report that has none, whose
+     *  presets endpoint does not exist. Defaults to `true`. */
+    presets?: boolean
+}
+
 /**
  * Fetches a report's presets + locales once on mount (and when the
  * report or DHIS2 base URL changes). Used by the report forms to drive
- * the preset selector and the locale picker.
+ * the preset selector and the locale picker. With `presets: false`,
+ * `presets` stays `null` and only the locales are fetched.
  */
-export const useReportConfig = (report: ReportSegment): ReportConfig => {
+export const useReportConfig = (
+    report: ReportSegment,
+    { presets: withPresets = true }: ReportConfigOptions = {}
+): ReportConfig => {
     const { baseUrl } = useConfig()
     const [presets, setPresets] = useState<PresetMap | null>(null)
     const [locales, setLocales] = useState<string[] | null>(null)
@@ -35,7 +46,7 @@ export const useReportConfig = (report: ReportSegment): ReportConfig => {
         setLocales(null)
         setError(null)
         Promise.all([
-            loadPresets(baseUrl, report),
+            withPresets ? loadPresets(baseUrl, report) : Promise.resolve(null),
             loadLocales(baseUrl, report),
         ])
             .then(([p, l]) => {
@@ -50,7 +61,7 @@ export const useReportConfig = (report: ReportSegment): ReportConfig => {
         return () => {
             cancelled = true
         }
-    }, [baseUrl, report])
+    }, [baseUrl, report, withPresets])
 
     return { presets, locales, error }
 }

@@ -1,11 +1,14 @@
 import {
     buildPartnerReportQuery,
     buildReferenceReportQuery,
+    buildValidationReportQuery,
 } from '../api/reports'
 import partnerSchema from '../schemas/partner-report.json'
 import referenceSchema from '../schemas/reference-report.json'
+import validationSchema from '../schemas/validation-report.json'
 import { defaultValues as partnerDefaults } from './PartnerReportForm'
 import { defaultValues as referenceDefaults } from './ReferenceReportForm'
+import { defaultValues as validationDefaults } from './ValidationReportForm'
 
 /**
  * An untouched form sends its initial values as the request the query
@@ -38,6 +41,12 @@ describe.each([
         fields: referenceSchema.fields as SchemaField[],
         values: referenceDefaults as unknown as Record<string, unknown>,
         query: buildReferenceReportQuery(referenceDefaults, 'html'),
+    },
+    {
+        report: 'Validation Report',
+        fields: validationSchema.fields as SchemaField[],
+        values: validationDefaults as unknown as Record<string, unknown>,
+        query: buildValidationReportQuery(validationDefaults, 'html'),
     },
 ])('$report form defaults', ({ fields, values, query }) => {
     const withDefault = fields.filter((f) => f.default !== undefined)

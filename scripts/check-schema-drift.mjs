@@ -45,6 +45,12 @@ const reports = [
         specPath: join(repoRoot, 'src/forms/ReferenceReportForm.wire-fields.ts'),
         specExport: 'referenceReportWireFields',
     },
+    {
+        label: 'Validation Report',
+        schemaPath: join(repoRoot, 'src/schemas/validation-report.json'),
+        specPath: join(repoRoot, 'src/forms/ValidationReportForm.wire-fields.ts'),
+        specExport: 'validationReportWireFields',
+    },
 ]
 
 const readSchemaNames = (path) => {

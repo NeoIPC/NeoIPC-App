@@ -32,6 +32,7 @@ const PROFILES = [
         nav: [
             'reports/partner',
             'reports/reference',
+            'reports/validation',
             'admin/reference-data',
             'admin/validation-exceptions',
         ],
@@ -45,7 +46,7 @@ const PROFILES = [
             'F_METADATA_EXPORT',
             'F_VIEW_EVENT_ANALYTICS',
         ],
-        nav: ['reports/partner', 'reports/reference'],
+        nav: ['reports/partner', 'reports/reference', 'reports/validation'],
         isAdmin: false,
     },
     {
@@ -54,6 +55,7 @@ const PROFILES = [
         nav: [
             'reports/partner',
             'reports/reference',
+            'reports/validation',
             'admin/reference-data',
             'admin/validation-exceptions',
         ],

@@ -16,6 +16,14 @@ Unreleased until it is versioned.
   for a field the request always sends, so an untouched form cannot silently render something other
   than the report's own default. Fields the form leaves unset are held to being omitted from the
   request instead.
+- A Validation Report page, for holders of the report authority, with a shortcut in the command
+  palette. It renders the NeoIPC Validation Report as HTML or PDF for the departments picked, every
+  department the user can see when none is. Its "More options" section lists every validation rule
+  with a one-sentence summary of what it checks, read from the report itself in the interface
+  language where it is translated, so a rule the report gains appears without an app release; every
+  rule is applied until the user narrows the selection, and "Select all" and "Clear all" reset it.
+  Administrators can also include the test departments. The page needs NeoIPC-Reporting with the
+  `/validation-report` endpoints.
 
 ## [0.1.0-alpha] - 2026-09-07
 

@@ -2,6 +2,7 @@ import {
     IconArchive24,
     IconCheckmarkCircle24,
     IconFileDocument24,
+    IconFlag24,
     IconWorld24,
 } from '@dhis2/ui'
 import i18n from '@dhis2/d2-i18n'
@@ -33,6 +34,7 @@ export interface MenuCategory {
 export const categoryOrder = [
     'reports/partner',
     'reports/reference',
+    'reports/validation',
     'admin/reference-data',
     'admin/validation-exceptions',
 ] as const
@@ -53,6 +55,13 @@ export const categories: Record<CategoryId, MenuCategory> = {
         icon: <IconWorld24 />,
         requiredAuthority: 'F_NEOIPC_REPORT',
         Page: React.lazy(() => import('../pages/reports/ReferenceReportPage')),
+    },
+    'reports/validation': {
+        id: 'reports/validation',
+        label: () => i18n.t('Validation Report'),
+        icon: <IconFlag24 />,
+        requiredAuthority: 'F_NEOIPC_REPORT',
+        Page: React.lazy(() => import('../pages/reports/ValidationReportPage')),
     },
     'admin/reference-data': {
         id: 'admin/reference-data',

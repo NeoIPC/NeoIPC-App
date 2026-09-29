@@ -1,0 +1,20 @@
+{
+  "fields": [
+    {
+      "name": "departmentFilter",
+      "type": "character[]",
+      "description": "Department codes (NeoIPC site codes) whose records are validated; empty =\nevery department the session can see."
+    },
+    {
+      "name": "rules",
+      "type": "integer[]",
+      "description": "Ids of the validation rules to apply; empty = every rule."
+    },
+    {
+      "name": "includeTestData",
+      "type": "logical",
+      "default": "false",
+      "description": "Include the departments flagged as test units."
+    }
+  ]
+}

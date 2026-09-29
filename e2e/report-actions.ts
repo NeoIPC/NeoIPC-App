@@ -124,8 +124,11 @@ export async function setDateField(
 }
 
 /**
- * Ensure the Partner Report covers `deptDisplayName` (matched as a substring,
- * since the label is "Hospital — Department" when `showParentInLabel` is set).
+ * Ensure a report form's department picker covers `deptDisplayName` (matched
+ * as a substring, since the label is "Hospital — Department" when
+ * `showParentInLabel` is set). `fieldName` is the picker's `name`, which is also
+ * its `data-test`: `unitCodes` on the Partner Report, `departmentFilter` on the
+ * Validation Report.
  *
  * A user with exactly one pickable department gets a labelled value instead of
  * a picker — the unit is already selected and there is nothing to choose. Which
@@ -140,10 +143,11 @@ export async function setDateField(
  */
 export async function selectDepartment(
     page: Page,
-    deptDisplayName: string
+    deptDisplayName: string,
+    fieldName = 'unitCodes'
 ): Promise<void> {
-    const collapsed = page.locator('[data-test="unitCodes-single"]')
-    const picker = page.locator('[data-test="unitCodes"]')
+    const collapsed = page.locator(`[data-test="${fieldName}-single"]`)
+    const picker = page.locator(`[data-test="${fieldName}"]`)
 
     // Wait for the collapsed value, and treat its absence as the answer.
     //

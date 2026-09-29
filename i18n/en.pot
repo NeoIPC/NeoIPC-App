@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-08-07T16:03:59.643Z\n"
-"PO-Revision-Date: 2026-08-07T16:03:59.643Z\n"
+"POT-Creation-Date: 2026-09-29T17:29:50.329Z\n"
+"PO-Revision-Date: 2026-09-29T17:29:50.330Z\n"
 
 msgid "Upload"
 msgstr "Upload"
@@ -505,11 +505,38 @@ msgstr "The \"from\" value must not exceed the \"to\" value."
 msgid "The start date must not be after the end date."
 msgstr "The start date must not be after the end date."
 
+msgid "Select at least one validation rule."
+msgstr "Select at least one validation rule."
+
+msgid "Leave empty to validate every department you can see."
+msgstr "Leave empty to validate every department you can see."
+
+msgid "Validation rules"
+msgstr "Validation rules"
+
+msgid "The rule list could not be loaded"
+msgstr "The rule list could not be loaded"
+
+msgid "The report applies every rule."
+msgstr "The report applies every rule."
+
+msgid "Select all"
+msgstr "Select all"
+
+msgid "Clear all"
+msgstr "Clear all"
+
+msgid "Rule {{id}}"
+msgstr "Rule {{id}}"
+
 msgid "Partner Report"
 msgstr "Partner Report"
 
 msgid "Reference Report"
 msgstr "Reference Report"
+
+msgid "Validation Report"
+msgstr "Validation Report"
 
 msgid "Rendering report... (elapsed {{seconds}}s)"
 msgstr "Rendering report... (elapsed {{seconds}}s)"
@@ -538,6 +565,10 @@ msgstr "Partner Report"
 msgctxt "Title for shortcut used by command palette"
 msgid "__MANIFEST_SHORTCUT_Reference Report"
 msgstr "Reference Report"
+
+msgctxt "Title for shortcut used by command palette"
+msgid "__MANIFEST_SHORTCUT_Validation Report"
+msgstr "Validation Report"
 
 msgctxt "Title for shortcut used by command palette"
 msgid "__MANIFEST_SHORTCUT_Reference data"

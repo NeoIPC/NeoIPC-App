@@ -1,10 +1,13 @@
 import type { PartnerReportFormValues } from '../forms/PartnerReportForm'
 import type { ReferenceReportFormValues } from '../forms/ReferenceReportForm'
+import type { ValidationReportFormValues } from '../forms/ValidationReportForm'
 import {
     buildPartnerReportQuery,
     buildReferenceReportQuery,
+    buildValidationReportQuery,
     renderPartnerReport,
     renderReferenceReport,
+    renderValidationReport,
 } from './reports'
 
 const partnerValues = (
@@ -311,5 +314,70 @@ describe('renderReferenceReport', () => {
         expect(url).toContain('https://dhis.example/neoipc/api/reference-report?')
         expect(url).toContain('fragmentMode=true')
         expect(init).toMatchObject({ method: 'GET' })
+    })
+})
+
+const validationValues = (
+    overrides: Partial<ValidationReportFormValues> = {}
+): ValidationReportFormValues => ({
+    departmentFilter: [],
+    rules: null,
+    includeTestData: false,
+    locale: '',
+    outputFormat: 'html',
+    ...overrides,
+})
+
+describe('buildValidationReportQuery', () => {
+    it('leaves rules out when every rule is selected', () => {
+        const qs = buildValidationReportQuery(validationValues(), 'html')
+        expect(qs.has('rules')).toBe(false)
+        expect(qs.get('includeTestData')).toBe('false')
+        expect(qs.get('fragmentMode')).toBe('true')
+    })
+
+    it('sends a selection of rules as repeated keys, and the departments', () => {
+        const qs = buildValidationReportQuery(
+            validationValues({
+                rules: [3, 25],
+                departmentFilter: ['AT_TEST_TEST', 'CH_TEST_TEST'],
+                includeTestData: true,
+                locale: 'de',
+            }),
+            'pdf'
+        )
+        expect(qs.getAll('rules')).toEqual(['3', '25'])
+        expect(qs.getAll('departmentFilter')).toEqual(['AT_TEST_TEST', 'CH_TEST_TEST'])
+        expect(qs.get('includeTestData')).toBe('true')
+        expect(qs.get('locale')).toBe('de')
+        expect(qs.has('fragmentMode')).toBe(false)
+    })
+})
+
+describe('renderValidationReport', () => {
+    const realFetch = global.fetch
+    afterEach(() => {
+        global.fetch = realFetch
+        jest.restoreAllMocks()
+    })
+
+    it('GETs the validation-report endpoint with the Accept header of the format', async () => {
+        const fetchMock = jest.fn().mockResolvedValue({
+            ok: true,
+            status: 200,
+            text: async () => '<h1>Validation</h1>',
+        } as unknown as Response)
+        global.fetch = fetchMock as unknown as typeof fetch
+
+        const result = await renderValidationReport(
+            'https://dhis.example',
+            validationValues({ rules: [25] })
+        )
+
+        expect(result).toEqual({ format: 'html', fragmentHtml: '<h1>Validation</h1>' })
+        const [url, init] = fetchMock.mock.calls[0]
+        expect(url).toContain('https://dhis.example/neoipc/api/validation-report?')
+        expect(url).toContain('rules=25')
+        expect(init).toMatchObject({ method: 'GET', headers: { Accept: 'text/html' } })
     })
 })
