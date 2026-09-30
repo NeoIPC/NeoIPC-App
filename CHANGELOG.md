@@ -36,6 +36,9 @@ Unreleased until it is versioned.
   on the part of the address such a link changes. It now scrolls to its target and moves the focus
   there. A web link that leaves the report, such as a patient's Tracker Capture dashboard, opens in a
   new tab, so the report stays on screen.
+- The page's scrollbar could not be dragged to the end of a long report: the app's pages were as tall
+  as the whole window although they start below the DHIS2 header bar, so the scrollbar's lower end
+  lay below the window's edge. The pages now fill only the area below the header bar.
 
 ## [0.1.0-alpha] - 2026-09-07
 

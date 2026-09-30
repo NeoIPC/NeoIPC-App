@@ -7,9 +7,9 @@
  * rather than stretching edge to edge.
  *
  * It is also the auto-height containing block the report cards need: page
- * content would otherwise be a direct child of the grid-stretched (~100vh)
- * content pane, and @dhis2/ui Card hard-codes height:100%, so every Card
- * balloons to a full viewport. This wrapper's height is content-based (a plain
+ * content would otherwise be a direct child of the grid-stretched content
+ * pane, as tall as the app's area below the DHIS2 header bar, and @dhis2/ui
+ * Card hard-codes height:100%, so every Card balloons to that height. This wrapper's height is content-based (a plain
  * block child, not grid-stretched), so Card's height:100% resolves against an
  * indefinite height and collapses to the card's content height. The
  * sibling-margin rule spaces stacked children without switching to a flex/grid

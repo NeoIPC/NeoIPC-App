@@ -49,6 +49,28 @@ test.describe('validation report', () => {
         // The header names the rules the document rests on.
         await expect(report).toContainText(/All \d+ rules/)
 
+        // The report scrolls in the content pane, whose scrollbar reaches the
+        // report's end only while the pane ends at the window's lower edge,
+        // and its screenshots are scaled to its width rather than widening it.
+        const paneBottom = await page
+            .locator('main')
+            .evaluate((main) => main.getBoundingClientRect().bottom)
+        expect(paneBottom).toBeLessThanOrEqual(await page.evaluate(() => window.innerHeight))
+        // An image not yet decoded measures 0 wide and would fit trivially.
+        await report
+            .locator('img')
+            .evaluateAll((images) =>
+                Promise.all(images.map((image) => (image as HTMLImageElement).decode()))
+            )
+        const imagesFit = await report.evaluate((container) => {
+            const width = container.getBoundingClientRect().width
+            return Array.from(container.querySelectorAll('img')).map(
+                (image) => image.getBoundingClientRect().width <= width
+            )
+        })
+        expect(imagesFit.length, 'the seeded finding shows a screenshot').toBeGreaterThan(0)
+        expect(imagesFit.every(Boolean)).toBe(true)
+
         // The seeded department's one open enrolment, E2E-TC-FIXTURE's, has no
         // Surveillance-End form and is older than the 120 days rule 43 allows,
         // so the report lists it with a reference to the problem's details.
