@@ -27,8 +27,8 @@ interface OrganisationUnitMultiSelectProps {
      * row belonging to any of these groups is dropped from the list and
      * reconciled out of the current selection. The report forms pass
      * `TEST_UNITS` on their department picker unless "Include test data"
-     * is on, so test departments are only offered (and stay selected)
-     * when the data layer would actually include them.
+     * is on, so the members of that group are offered (and stay selected)
+     * only while it is.
      */
     excludeGroupCodes?: string[]
     /**

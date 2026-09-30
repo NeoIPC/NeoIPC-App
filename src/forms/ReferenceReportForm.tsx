@@ -26,6 +26,7 @@ import ReferenceDataSelect from './ReferenceDataSelect'
 import PresetSelect, { CUSTOM_PRESET } from './PresetSelect'
 import { governedKeys, resolvePresetValues } from './applyPreset'
 import { languageLabel } from './languageLabel'
+import { withReportLocale } from './reportLocale'
 import { hasErrors, validateReferenceReport } from './reportValidation'
 import { useReportConfig } from './useReportConfig'
 import {
@@ -191,8 +192,9 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
 
     const usingSavedDataset = values.referenceDataId !== ''
     // `TEST_UNITS` holds departments, so this is the one picker the setting
-    // can act on — offering a test department while the data layer drops it
-    // would resolve to an empty org-unit set at render time. Countries are
+    // can act on — a test department picked while the data layer drops it
+    // would fail the render when picked alone and be left out of it when
+    // picked with others. Countries are
     // never members, which is why that picker takes no exclusion.
     const departmentExcludeGroups = useMemo(
         () => (values.testUnitFilter === false ? [] : [TEST_UNITS_GROUP_CODE]),
@@ -205,7 +207,7 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
                 event.preventDefault()
                 setSubmitAttempted(true)
                 if (hasErrors(validateReferenceReport(values))) return
-                onSubmit?.(values)
+                onSubmit?.(withReportLocale(values, i18n.language, locales))
             }}
         >
             <Card>
@@ -298,6 +300,7 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
                         label={i18n.t('Departments')}
                         groupCode={DEPARTMENT_GROUP_CODE}
                         excludeGroupCodes={departmentExcludeGroups}
+                        showParentInLabel
                         selectedCodes={values.departmentFilter}
                         onChange={setField('departmentFilter')}
                         disabled={usingSavedDataset}
@@ -457,7 +460,7 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
                         <SingleSelectField
                             label={i18n.t('Report language')}
                             helpText={i18n.t(
-                                'Leave blank to use the locale from your DHIS2 user setting.'
+                                'Leave blank to use your DHIS2 interface language if the report is available in it, and English otherwise.'
                             )}
                             selected={
                                 values.locale === '' ||
@@ -472,7 +475,7 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
                         >
                             <SingleSelectOption
                                 value=""
-                                label={i18n.t('(use DHIS2 user setting)')}
+                                label={i18n.t('(interface language if available, otherwise English)')}
                             />
                             {(locales ?? []).map((loc) => (
                                 <SingleSelectOption

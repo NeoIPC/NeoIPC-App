@@ -42,15 +42,15 @@ export const DEPARTMENT_GROUP_CODE = 'NEO_DEPARTMENT'
 export const ELIGIBLE_PATIENTS_GROUP_CODE = 'NEOIPC_ALL_PATIENTS_ELIGIBLE'
 
 /**
- * Code of the org-unit group whose members are the synthetic test
- * hierarchy (e.g. `AT_TEST`, `AT_TEST_TEST`). neoipcr drops these units
- * from the metadata *before* it applies any department filter unless
- * `include_test_data` is set (`dhis2-metadata.R`), so a department that
- * is a `TEST_UNITS` member selected while test data is excluded resolves
- * to an empty org-unit set and the render fails with an opaque DHIS2
- * error. The department picker therefore offers `TEST_UNITS` departments
- * only when "Include test data" is on, keying on direct `TEST_UNITS`
- * group membership to match neoipcr's metadata filtering.
+ * Code of the org-unit group that marks test departments (in the play
+ * data, the `*_TEST_TEST2` departments such as `AT_TEST_TEST2`). neoipcr
+ * drops the members of this group from the metadata *before* it applies
+ * any department filter unless `include_test_data` is set
+ * (`dhis2-metadata.R`): a member picked while test data is excluded is left
+ * out of the report, and a filter naming only such members fails the render
+ * (`neoipcr_empty_department_filter`). The report forms' department
+ * pickers therefore leave out the direct members of this group unless
+ * "Include test data" is on; they read group membership and nothing else.
  */
 export const TEST_UNITS_GROUP_CODE = 'TEST_UNITS'
 

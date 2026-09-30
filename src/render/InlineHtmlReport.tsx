@@ -40,9 +40,34 @@ const typesetMath = (container: HTMLElement): void => {
     }
 }
 
+const XLINK_NAMESPACE = 'http://www.w3.org/1999/xlink'
+
 /**
- * The element of the report `fragment` names, looked up the way a browser
- * resolves a fragment: by the text as written first, then percent-decoded.
+ * The address a link in the report points to: its `href`, or for an SVG link
+ * written in the older form, its `xlink:href`. `null` for an `a` without one.
+ */
+const linkAddress = (link: Element): string | null =>
+    link.getAttribute('href') ?? link.getAttributeNS(XLINK_NAMESPACE, 'href')
+
+/**
+ * The absolute web address a link leaves the report for, resolved against the
+ * document's base URL: `null` for a link to a place in the report, and for
+ * every scheme but http(s), which is left to the browser (`mailto:`).
+ */
+const leavingWebAddress = (address: string): string | null => {
+    if (address.startsWith('#')) return null
+    let url: URL
+    try {
+        url = new URL(address, document.baseURI)
+    } catch {
+        return null
+    }
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null
+}
+
+/**
+ * The element of the report `fragment` names, looked up by id: the text as
+ * written first, then percent-decoded.
  */
 const findFragmentTarget = (container: HTMLElement, fragment: string): HTMLElement | undefined => {
     const byId = (id: string) =>
@@ -57,45 +82,89 @@ const findFragmentTarget = (container: HTMLElement, fragment: string): HTMLEleme
 }
 
 /**
- * Follow a link to a place in the report without navigating. The app routes on
- * the URL's fragment (`#/reports/…`), so letting the browser follow
- * `href="#sec-problem-details-3"` would hand the router a route that does not
- * exist, and its fallback redirect would unmount the page and discard the
- * report. The target is scrolled into view and takes the focus, the way a skip
- * link hands it over, so keyboard and screen-reader users continue from there;
- * the browser's own fragment navigation would focus nothing for a section.
- * A middle click arrives as `auxclick` and is followed in place too: a new tab
- * of the app would open on its first page, not on the report.
+ * Scroll the target of a link to a place in the report into view and hand it
+ * the focus, the way a skip link does, so keyboard and screen-reader users
+ * continue from there; the browser's own fragment navigation would focus
+ * nothing for a section. A target the focus does not reach gains
+ * `tabindex="-1"`, which makes it focusable without adding it to the Tab
+ * order, and is focused again. One that takes the focus already, such as the
+ * footnote reference a footnote's back-link returns to, keeps its place in
+ * that order. Whether the focus arrived is what decides, not `tabIndex`,
+ * which reports 0 for some elements that cannot take it, an `a` without
+ * `href` among them.
  */
-const followLinkWithinReport = (event: MouseEvent): void => {
-    if (event.type === 'auxclick' && event.button !== 1) return
-    const container = event.currentTarget
-    if (!(container instanceof HTMLElement) || !(event.target instanceof Element)) return
-    const link = event.target.closest('a[href^="#"]')
-    if (!link || !container.contains(link)) return
-    event.preventDefault()
-
-    const target = findFragmentTarget(container, (link.getAttribute('href') ?? '#').slice(1))
+const focusFragmentTarget = (container: HTMLElement, fragment: string): void => {
+    const target = findFragmentTarget(container, fragment)
     if (!target) return
     target.scrollIntoView({ block: 'start' })
-    if (!target.matches('a[href], button, input, select, textarea, [tabindex]')) {
-        target.setAttribute('tabindex', '-1')
-    }
     target.focus({ preventScroll: true })
+    if (document.activeElement !== target) {
+        target.setAttribute('tabindex', '-1')
+        target.focus({ preventScroll: true })
+    }
 }
 
 /**
- * Open the web links that leave the report, such as a patient's Tracker
- * Capture dashboard, in a new tab, so the report stays on screen: following
- * one in place replaces the app and discards the rendered report. `noopener`
- * keeps the opened page from reaching back into the app through
- * `window.opener`. Other schemes (`mailto:`) are left to the browser.
+ * Follow a link in the report without the app losing the report. Delegated
+ * from the report's container, so it also covers links the report's own
+ * scripts add after it is rendered; an SVG link counts as well, with its
+ * address in `href` or `xlink:href`.
+ *
+ * - A link to a place in the report is followed in place. The app routes on
+ *   the URL's fragment (`#/reports/…`), so letting the browser follow
+ *   `href="#sec-problem-details-3"` would hand the router a route that does
+ *   not exist, and its fallback redirect would unmount the page and discard
+ *   the report.
+ * - A web link that leaves the report, such as a patient's Tracker Capture
+ *   dashboard, opens in a new tab: following it in place would replace the
+ *   app. The tab is opened here, with the browser's own navigation
+ *   cancelled, so each click opens exactly one tab; `noopener` keeps the
+ *   opened page from reaching back into the app through `window.opener`.
+ *
+ * Both take over a click whatever its modifier keys, and a middle click,
+ * which arrives as `auxclick`. For a link to a place in the report that is
+ * necessary: a browser left to handle either would open the app's own
+ * address in a new tab, which lands on its first page rather than on the
+ * report. A web link is treated the same way, so every way of following a
+ * link behaves alike and every tab opened for one is opened here with
+ * `noopener`; the browser's own variants, such as a background tab for a
+ * Ctrl-click, give way to a new tab. Other buttons, and links of any other
+ * scheme, are left to the browser, and a click a script of the report has
+ * already cancelled is left to that script.
  */
-const openLeavingLinksInNewTab = (container: HTMLElement): void => {
-    for (const link of Array.from(container.querySelectorAll<HTMLAnchorElement>('a[href]'))) {
-        if ((link.getAttribute('href') ?? '').startsWith('#')) continue
-        if (link.protocol !== 'http:' && link.protocol !== 'https:') continue
-        link.target = '_blank'
+const followLink = (event: MouseEvent): void => {
+    if (event.defaultPrevented) return
+    if (event.type === 'auxclick' && event.button !== 1) return
+    const container = event.currentTarget
+    if (!(container instanceof HTMLElement) || !(event.target instanceof Element)) return
+    const link = event.target.closest('a')
+    if (!link || !container.contains(link)) return
+    const address = linkAddress(link)
+    if (address === null) return
+
+    if (address.startsWith('#')) {
+        event.preventDefault()
+        focusFragmentTarget(container, address.slice(1))
+        return
+    }
+    const leaving = leavingWebAddress(address)
+    if (leaving === null) return
+    event.preventDefault()
+    window.open(leaving, '_blank', 'noopener,noreferrer')
+}
+
+/**
+ * Mark the web links present when the report is rendered as opening in a new
+ * tab without an opener or a referrer. A click on one is handled by
+ * {@link followLink}; the attributes serve the ways of following a link that
+ * bypass it, such as the browser's context menu, and a click that a script of
+ * the report stops before it reaches the report's container.
+ */
+const markLeavingLinks = (container: HTMLElement): void => {
+    for (const link of Array.from(container.querySelectorAll('a'))) {
+        const address = linkAddress(link)
+        if (address === null || leavingWebAddress(address) === null) continue
+        link.setAttribute('target', '_blank')
         const rel = new Set((link.getAttribute('rel') ?? '').split(/\s+/).filter(Boolean))
         rel.add('noopener')
         rel.add('noreferrer')
@@ -139,9 +208,9 @@ const InlineHtmlReport: FC<InlineHtmlReportProps> = ({ fragmentHtml }) => {
         let cancelled = false
         container.innerHTML = fragmentHtml
         typesetMath(container)
-        openLeavingLinksInNewTab(container)
-        container.addEventListener('click', followLinkWithinReport)
-        container.addEventListener('auxclick', followLinkWithinReport)
+        markLeavingLinks(container)
+        container.addEventListener('click', followLink)
+        container.addEventListener('auxclick', followLink)
 
         const reExecute = async () => {
             const scripts = Array.from(container.querySelectorAll('script'))
@@ -157,8 +226,8 @@ const InlineHtmlReport: FC<InlineHtmlReportProps> = ({ fragmentHtml }) => {
 
         return () => {
             cancelled = true
-            container.removeEventListener('click', followLinkWithinReport)
-            container.removeEventListener('auxclick', followLinkWithinReport)
+            container.removeEventListener('click', followLink)
+            container.removeEventListener('auxclick', followLink)
             container.innerHTML = ''
         }
     }, [fragmentHtml])

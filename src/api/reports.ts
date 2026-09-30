@@ -262,12 +262,19 @@ export const renderReferenceReport = async (
 /**
  * Render the Validation Report: `GET /validation-report`, with the `Accept`
  * header and `fragmentMode` branching on
- * {@link ValidationReportFormValues.outputFormat}.
+ * {@link ValidationReportFormValues.outputFormat}. An empty `rules` selection
+ * is refused before any request: a query string cannot tell an empty list
+ * from an absent one, and the service applies every rule when `rules` is
+ * absent, so the request would run the opposite of what was asked.
  */
 export const renderValidationReport = async (
     baseUrl: string,
     values: ValidationReportFormValues
 ): Promise<RenderResult> => {
+    if (values.rules !== null && values.rules.length === 0) {
+        throw new Error(i18n.t('Select at least one validation rule.'))
+    }
+
     const format = values.outputFormat
     const qs = buildValidationReportQuery(values, format)
     const response = await fetchNeoipcReporting(

@@ -21,13 +21,18 @@ Unreleased until it is versioned.
   department the user can see when none is. Its "More options" section lists every validation rule
   with a one-sentence summary of what it checks, read from the report itself in the interface
   language where it is translated, so a rule the report gains appears without an app release; every
-  rule is applied until the user narrows the selection, and "Select all" and "Clear all" reset it.
-  Administrators can also include the test departments. The page needs NeoIPC-Reporting with the
-  `/validation-report` endpoints.
+  rule is applied until the user narrows the selection. "Select all" restores every rule, and "Clear
+  all" unticks them all so a few can be picked. Administrators can also include the test
+  departments. The page needs NeoIPC-Reporting with the `/validation-report` endpoints.
 - A "Data validation summary table" content toggle on the Partner and Reference Report forms, for
   the table the reports show first after their header. It is on by default and follows the content
   presets like the other tables; it needs a NeoIPC-Reporting that accepts
   `includeValidationSummaryTable`.
+
+### Changed
+
+- The Reference Report's department filter labels each department with its hospital, as the Partner
+  Report's picker does, so departments of the same name in different hospitals can be told apart.
 
 ### Fixed
 
@@ -39,6 +44,11 @@ Unreleased until it is versioned.
 - The page's scrollbar could not be dragged to the end of a long report: the app's pages were as tall
   as the whole window although they start below the DHIS2 header bar, so the scrollbar's lower end
   lay below the window's edge. The pages now fill only the area below the header bar.
+- With the report language left blank, the Partner and Reference Reports were rendered in the
+  browser's language, although the form said they would follow the DHIS2 user setting. A blank
+  report language now selects the DHIS2 interface language when the report is available in it, and
+  English otherwise, on these two forms and on the Validation Report's. The Partner Report's JSON
+  dataset download, which carries codes rather than text, still sends no language.
 
 ## [0.1.0-alpha] - 2026-09-07
 

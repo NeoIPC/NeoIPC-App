@@ -18,7 +18,9 @@ import CollapsibleSection from './CollapsibleSection'
 import OrganisationUnitMultiSelect from './fields/OrganisationUnitMultiSelect'
 import { OrgUnitRow, allCodedUnitsExcluded } from './fields/orgUnits'
 import { languageLabel } from './languageLabel'
+import { withReportLocale } from './reportLocale'
 import { hasErrors, validateValidationReport } from './reportValidation'
+import { toggleRuleSelection } from './ruleSelection'
 import { useReportConfig } from './useReportConfig'
 import { useValidationRules } from './useValidationRules'
 import styles from './formLayout.module.css'
@@ -90,21 +92,16 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
     const isRuleSelected = (id: number): boolean =>
         values.rules === null || values.rules.includes(id)
 
-    // A selection of every rule is stored as `null`, so the request leaves
-    // `rules` out and the report applies its own full set.
     const toggleRule = (id: number, checked: boolean): void =>
-        setValues((prev) => {
-            const current = prev.rules ?? allIds
-            const next = checked
-                ? [...current.filter((r) => r !== id), id].sort((a, b) => a - b)
-                : current.filter((r) => r !== id)
-            const everyRule = allIds.length > 0 && allIds.every((r) => next.includes(r))
-            return { ...prev, rules: everyRule ? null : next }
-        })
+        setValues((prev) => ({
+            ...prev,
+            rules: toggleRuleSelection(prev.rules, allIds, id, checked),
+        }))
 
-    // `TEST_UNITS` holds departments: offering a test department while the
-    // report leaves test units out would resolve to no department at render
-    // time, so the picker drops them unless test data is requested.
+    // `TEST_UNITS` holds departments: a member picked while the report leaves
+    // test units out would fail the render when picked alone and be left out
+    // of it when picked with others, so the picker drops its members unless
+    // test data is requested.
     const departmentExcludeGroups = useMemo(
         () => (values.includeTestData ? [] : [TEST_UNITS_GROUP_CODE]),
         [values.includeTestData]
@@ -123,7 +120,7 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
                 event.preventDefault()
                 setSubmitAttempted(true)
                 if (hasErrors(validateValidationReport(values))) return
-                onSubmit?.(values)
+                onSubmit?.(withReportLocale(values, i18n.language, locales))
             }}
         >
             <Card>
@@ -164,6 +161,7 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
                     label={i18n.t('Departments')}
                     groupCode={DEPARTMENT_GROUP_CODE}
                     excludeGroupCodes={departmentExcludeGroups}
+                    showParentInLabel
                     selectedCodes={values.departmentFilter}
                     onChange={setField('departmentFilter')}
                     onRowsLoaded={setDeptRows}
@@ -258,7 +256,7 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
                         <SingleSelectField
                             label={i18n.t('Report language')}
                             helpText={i18n.t(
-                                'Leave blank to use the locale from your DHIS2 user setting.'
+                                'Leave blank to use your DHIS2 interface language if the report is available in it, and English otherwise.'
                             )}
                             selected={
                                 values.locale === '' ||
@@ -271,7 +269,7 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
                         >
                             <SingleSelectOption
                                 value=""
-                                label={i18n.t('(use DHIS2 user setting)')}
+                                label={i18n.t('(interface language if available, otherwise English)')}
                             />
                             {(locales ?? []).map((loc) => (
                                 <SingleSelectOption

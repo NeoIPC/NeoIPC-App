@@ -5,9 +5,8 @@ import { includeElementKeys } from './enums'
  * The content fields a preset governs: the `includeX` figure/table
  * flags plus the confidence-interval mode and the two section-text
  * toggles. While a non-Custom preset is selected, the form locks these
- * controls; "Custom" unlocks them. Shared by both report forms (the
- * Reference form ignores the keys it doesn't expose — but it exposes all
- * of these).
+ * controls; "Custom" unlocks them. Shared by the Partner and Reference
+ * forms, the two with presets, and each of them exposes all of these.
  */
 export const governedKeys = [
     ...includeElementKeys,

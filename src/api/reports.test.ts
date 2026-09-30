@@ -367,6 +367,16 @@ describe('renderValidationReport', () => {
         jest.restoreAllMocks()
     })
 
+    it('rejects an empty rule selection without calling fetch', async () => {
+        const fetchMock = jest.fn()
+        global.fetch = fetchMock as unknown as typeof fetch
+
+        await expect(
+            renderValidationReport('https://dhis.example', validationValues({ rules: [] }))
+        ).rejects.toThrow(/validation rule/i)
+        expect(fetchMock).not.toHaveBeenCalled()
+    })
+
     it('GETs the validation-report endpoint with the Accept header of the format', async () => {
         const fetchMock = jest.fn().mockResolvedValue({
             ok: true,

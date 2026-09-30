@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-09-29T21:27:49.217Z\n"
-"PO-Revision-Date: 2026-09-29T21:27:49.218Z\n"
+"POT-Creation-Date: 2026-09-30T17:16:14.034Z\n"
+"PO-Revision-Date: 2026-09-30T17:16:14.035Z\n"
 
 msgid "Upload"
 msgstr "Upload"
@@ -138,6 +138,13 @@ msgstr ""
 msgid "One of the values contains characters that are not allowed."
 msgstr "One of the values contains characters that are not allowed."
 
+msgid ""
+"A validation rule you selected is no longer available. Reload the page to "
+"see the current rules."
+msgstr ""
+"A validation rule you selected is no longer available. Reload the page to "
+"see the current rules."
+
 msgid "The uploaded file is not a valid reference dataset."
 msgstr "The uploaded file is not a valid reference dataset."
 
@@ -161,6 +168,9 @@ msgstr "The report is not available in the requested format or language."
 
 msgid "The request could not be completed."
 msgstr "The request could not be completed."
+
+msgid "Select at least one validation rule."
+msgstr "Select at least one validation rule."
 
 msgid "Please select a data file before submitting."
 msgstr "Please select a data file before submitting."
@@ -300,11 +310,15 @@ msgstr "Include methods texts"
 msgid "Report language"
 msgstr "Report language"
 
-msgid "Leave blank to use the locale from your DHIS2 user setting."
-msgstr "Leave blank to use the locale from your DHIS2 user setting."
+msgid ""
+"Leave blank to use your DHIS2 interface language if the report is available "
+"in it, and English otherwise."
+msgstr ""
+"Leave blank to use your DHIS2 interface language if the report is available "
+"in it, and English otherwise."
 
-msgid "(use DHIS2 user setting)"
-msgstr "(use DHIS2 user setting)"
+msgid "(interface language if available, otherwise English)"
+msgstr "(interface language if available, otherwise English)"
 
 msgid "Upload partner data file (JSON)"
 msgstr "Upload partner data file (JSON)"
@@ -507,9 +521,6 @@ msgstr "The \"from\" value must not exceed the \"to\" value."
 
 msgid "The start date must not be after the end date."
 msgstr "The start date must not be after the end date."
-
-msgid "Select at least one validation rule."
-msgstr "Select at least one validation rule."
 
 msgid ""
 "All departments in your scope are test units. Turn on \"Include test data\" "

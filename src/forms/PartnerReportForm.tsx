@@ -39,6 +39,7 @@ import { matchReferenceData, BenchmarkMatch } from './referenceDataMatch'
 import type { OutputFormat } from '../api/reports'
 import { governedKeys, resolvePresetValues } from './applyPreset'
 import { languageLabel } from './languageLabel'
+import { withReportLocale } from './reportLocale'
 import { hasErrors, validatePartnerReport } from './reportValidation'
 import { useReportConfig } from './useReportConfig'
 import {
@@ -203,11 +204,11 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
             ),
         [deptRows, values.unitCodes]
     )
-    // Test-unit departments (e.g. AT_TEST_TEST) are dropped by neoipcr
-    // unless include_test_data is set, so the picker offers them only when
-    // "Include test data" is checked — otherwise selecting one resolves to
-    // an empty org-unit set and the render fails. Switching the box off
-    // reconciles any already-selected test department out of the picker.
+    // Members of the `TEST_UNITS` group (e.g. AT_TEST_TEST2) are dropped by
+    // neoipcr unless include_test_data is set, so the picker offers them only
+    // when "Include test data" is checked — otherwise one picked alone fails
+    // the render and one picked with others is left out of it. Switching the
+    // box off reconciles any already-selected member out of the picker.
     const departmentExcludeGroups = useMemo(
         () => (values.includeTestData ? [] : [TEST_UNITS_GROUP_CODE]),
         [values.includeTestData]
@@ -489,7 +490,7 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
         <SingleSelectField
             label={i18n.t('Report language')}
             helpText={i18n.t(
-                'Leave blank to use the locale from your DHIS2 user setting.'
+                'Leave blank to use your DHIS2 interface language if the report is available in it, and English otherwise.'
             )}
             selected={
                 values.locale === '' || (locales ?? []).includes(values.locale)
@@ -501,7 +502,7 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
         >
             <SingleSelectOption
                 value=""
-                label={i18n.t('(use DHIS2 user setting)')}
+                label={i18n.t('(interface language if available, otherwise English)')}
             />
             {(locales ?? []).map((loc) => (
                 <SingleSelectOption
@@ -532,7 +533,7 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
                 event.preventDefault()
                 setSubmitAttempted(true)
                 if (hasErrors(validatePartnerReport(values))) return
-                onSubmit?.(values)
+                onSubmit?.(withReportLocale(values, i18n.language, locales))
             }}
         >
             <Card>

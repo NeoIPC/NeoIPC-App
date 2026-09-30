@@ -50,11 +50,13 @@ export const confidenceIntervalModeLabel = (
 
 /**
  * The per-element content-toggle keys shared by the Partner and Reference
- * forms. Each is an `includeX` boolean render flag (a figure or table the
- * report can include or omit); the two reports expose the same elements,
- * so one list drives both forms' content checkboxes, in the order the
- * reports place them. These are exactly the `boolean` `includeX` keys of
- * `PartnerReportFormValues` / `ReferenceReportFormValues`.
+ * forms: the figure and table toggles, each an `includeX` boolean render
+ * flag for a figure or table the report can include or omit. The two
+ * reports expose the same elements, so one list drives both forms' content
+ * checkboxes. These keys are a subset of the `boolean` `includeX` keys of
+ * `PartnerReportFormValues` / `ReferenceReportFormValues`: the other ones
+ * toggle text sections or, on the Partner form, which patients and
+ * departments the report covers.
  */
 export const includeElementKeys = [
     'includeValidationSummaryTable',

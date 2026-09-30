@@ -2,6 +2,7 @@ import { useConfig } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
 import { useEffect, useState } from 'react'
 import { loadValidationRules, ValidationRule } from '../api/reportConfig'
+import { languageSubtag } from './reportLocale'
 
 /** The Validation Report's rules; `null` while loading, `error` set when the fetch fails. */
 export interface ValidationRulesState {
@@ -10,13 +11,15 @@ export interface ValidationRulesState {
 }
 
 /**
- * Fetches the Validation Report's rule catalogue once on mount, with the
- * summaries in the app's interface language where the report carries them
- * and in English otherwise.
+ * Fetches the Validation Report's rule catalogue on mount, and again when
+ * the DHIS2 base URL or the interface language changes, with the summaries
+ * in the interface language where the report carries them and in English
+ * otherwise. A response to a superseded request is dropped, however late it
+ * arrives.
  */
 export const useValidationRules = (): ValidationRulesState => {
     const { baseUrl } = useConfig()
-    const language = (i18n.language ?? 'en').split(/[-_]/)[0].toLowerCase()
+    const language = languageSubtag(i18n.language)
     const [rules, setRules] = useState<ValidationRule[] | null>(null)
     const [error, setError] = useState<Error | null>(null)
 

@@ -52,6 +52,22 @@ describe('enrichError', () => {
         expect(err.message).toContain('benchmark dataset')
     })
 
+    // The service's own detail names an API route and is English only; the
+    // form offers only the ids it fetched, so the cause is a rule list that
+    // changed while the page was open, which a reload settles.
+    it('asks for a reload when a selected validation rule is no longer known', async () => {
+        const err = await enrichError(
+            makeError(400, {
+                code: 'unknown-validation-rule',
+                title: 'Unknown validation rule',
+                detail: 'The Validation Report has no rule 99; GET /validation-report/rules lists the rules it applies.',
+            })
+        )
+        expect(err.message).toBe(
+            'A validation rule you selected is no longer available. Reload the page to see the current rules.'
+        )
+    })
+
     it('prefers the mapped message over the backend title/detail', async () => {
         const err = await enrichError(
             makeError(400, {

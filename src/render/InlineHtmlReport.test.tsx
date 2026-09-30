@@ -19,8 +19,16 @@ const FRAGMENT = `
 <h2 id="sec-problem-details-3">Details</h2>
 <h2 id="a%20b">The id as written</h2>
 <h2 id="a b">The id decoded</h2>
+<p><a id="to-cafe" href="#caf%C3%A9">A reference only its decoded form finds.</a></p>
+<h2 id="café">Café</h2>
+<p>A claim.<a id="fnref1" href="#fn1" class="footnote-ref">1</a></p>
+<ol><li id="fn1">The footnote. <a id="fnback1" href="#fnref1" class="footnote-back">↩︎</a></li></ol>
+<p><a id="to-percent" href="#100%">A reference with a malformed escape.</a></p>
+<p><a id="to-anchor" href="#bare-anchor">A reference to an anchor without an address.</a></p>
+<p><a id="bare-anchor">An anchor without an address</a></p>
 <h3><a id="dashboard" href="https://dhis.example/dhis-web-tracker-capture/index.html#/dashboard?tei=T1" rel="external">P1</a></h3>
 <p><a id="support" href="mailto:support@example.org">Support</a></p>
+<svg><a id="figure-source" xlink:href="https://example.org/figure-source"><text id="figure-label">Source</text></a></svg>
 `
 
 /**
@@ -48,6 +56,7 @@ describe('InlineHtmlReport', () => {
     let host: HTMLDivElement
     let root: Root
     let scrolledTo: Element[]
+    let opened: jest.SpyInstance
 
     beforeEach(() => {
         // jsdom lays nothing out, so it has no scrollIntoView of its own.
@@ -55,6 +64,8 @@ describe('InlineHtmlReport', () => {
         Element.prototype.scrollIntoView = function (this: Element) {
             scrolledTo.push(this)
         }
+        // jsdom opens no windows; the tabs a link opens are what is asserted.
+        opened = jest.spyOn(window, 'open').mockImplementation(() => null)
         window.location.hash = '#/reports/validation'
         host = document.createElement('div')
         document.body.appendChild(host)
@@ -65,6 +76,7 @@ describe('InlineHtmlReport', () => {
     afterEach(() => {
         act(() => root.unmount())
         host.remove()
+        opened.mockRestore()
     })
 
     const element = (id: string): HTMLElement => {
@@ -75,7 +87,7 @@ describe('InlineHtmlReport', () => {
         return found
     }
 
-    const dispatch = (link: HTMLElement, type: 'click' | 'auxclick', button = 0): boolean => {
+    const dispatch = (link: Element, type: 'click' | 'auxclick', button = 0): boolean => {
         const event = new MouseEvent(type, { bubbles: true, cancelable: true, button })
         act(() => {
             link.dispatchEvent(event)
@@ -110,17 +122,110 @@ describe('InlineHtmlReport', () => {
         expect(dispatch(element('to-details'), 'auxclick', 2)).toBe(false)
     })
 
-    it('resolves a reference by the id as written before the decoded one, as a browser does', () => {
+    it('looks a reference up by id: the text as written first, then percent-decoded', () => {
         dispatch(element('to-escaped'), 'click')
 
         expect(document.activeElement).toBe(element('a%20b'))
     })
 
-    it('lets a link that leaves the report navigate', () => {
-        expect(dispatch(element('dashboard'), 'click')).toBe(false)
+    it('finds a target by the percent-decoded id when no id matches the text as written', () => {
+        expect(host.querySelector('[id="caf%C3%A9"]')).toBeNull()
+
+        dispatch(element('to-cafe'), 'click')
+
+        expect(document.activeElement).toBe(element('café'))
     })
 
-    it('opens a web link that leaves the report in a new tab, without an opener', () => {
+    // Pandoc's footnote back-link targets the footnote reference, an `a[href]`
+    // that is in the Tab order already; `tabindex="-1"` would take it out.
+    it('focuses a target that can take the focus without changing its tabindex', () => {
+        dispatch(element('fnback1'), 'click')
+
+        const reference = element('fnref1')
+        expect(document.activeElement).toBe(reference)
+        expect(reference.hasAttribute('tabindex')).toBe(false)
+    })
+
+    // An `a` without `href` reports a tabIndex of 0 but cannot take the focus.
+    it('makes a target focusable when the focus does not reach it', () => {
+        const anchor = element('bare-anchor')
+        expect(anchor.tabIndex).toBe(0)
+
+        dispatch(element('to-anchor'), 'click')
+
+        expect(document.activeElement).toBe(anchor)
+        expect(anchor.getAttribute('tabindex')).toBe('-1')
+    })
+
+    it('keeps the report on screen for a reference with a malformed escape', async () => {
+        const errors: unknown[] = []
+        const recordError = (event: ErrorEvent): void => {
+            errors.push(event.error)
+            event.preventDefault()
+        }
+        window.addEventListener('error', recordError)
+        try {
+            expect(dispatch(element('to-percent'), 'click')).toBe(true)
+            await settle()
+        } finally {
+            window.removeEventListener('error', recordError)
+        }
+
+        expect(errors).toEqual([])
+        expect(window.location.hash).toBe('#/reports/validation')
+        expect(host.querySelector('#first-page')).toBeNull()
+        expect(scrolledTo).toEqual([])
+    })
+
+    it('opens a web link that leaves the report in exactly one new tab, without an opener', () => {
+        expect(dispatch(element('dashboard'), 'click')).toBe(true)
+
+        expect(opened.mock.calls).toEqual([
+            [
+                'https://dhis.example/dhis-web-tracker-capture/index.html#/dashboard?tei=T1',
+                '_blank',
+                'noopener,noreferrer',
+            ],
+        ])
+    })
+
+    it('opens one new tab for a middle click on a web link, and leaves other buttons alone', () => {
+        expect(dispatch(element('dashboard'), 'auxclick', 1)).toBe(true)
+        expect(dispatch(element('dashboard'), 'auxclick', 2)).toBe(false)
+
+        expect(opened).toHaveBeenCalledTimes(1)
+    })
+
+    it('opens a web link that a report script adds after rendering in a new tab', () => {
+        const container = host.querySelector('#neoipc-rendered-report')
+        act(() => {
+            container?.insertAdjacentHTML(
+                'beforeend',
+                '<p><a id="added-later" href="https://example.org/added">Added by a script</a></p>'
+            )
+        })
+
+        expect(dispatch(element('added-later'), 'click')).toBe(true)
+        expect(opened).toHaveBeenCalledWith(
+            'https://example.org/added',
+            '_blank',
+            'noopener,noreferrer'
+        )
+    })
+
+    it('opens an SVG link written with xlink:href in a new tab', () => {
+        const label = host.querySelector('[id="figure-label"]')
+        if (!label) throw new Error('no SVG link label on the page')
+
+        expect(dispatch(label, 'click')).toBe(true)
+        expect(opened).toHaveBeenCalledWith(
+            'https://example.org/figure-source',
+            '_blank',
+            'noopener,noreferrer'
+        )
+    })
+
+    it('marks the web links present at rendering to open in a new tab, without an opener', () => {
         const dashboard = element('dashboard')
 
         expect(dashboard.getAttribute('target')).toBe('_blank')
@@ -129,7 +234,24 @@ describe('InlineHtmlReport', () => {
         )
     })
 
+    it('leaves a click a report script has cancelled to that script', () => {
+        const dashboard = element('dashboard')
+        const cancel = (event: Event): void => event.preventDefault()
+        dashboard.addEventListener('click', cancel)
+        try {
+            dispatch(dashboard, 'click')
+        } finally {
+            dashboard.removeEventListener('click', cancel)
+        }
+
+        expect(opened).not.toHaveBeenCalled()
+    })
+
     it('leaves a link of another scheme to the browser', () => {
-        expect(element('support').hasAttribute('target')).toBe(false)
+        const support = element('support')
+
+        expect(support.hasAttribute('target')).toBe(false)
+        expect(dispatch(support, 'click')).toBe(false)
+        expect(opened).not.toHaveBeenCalled()
     })
 })
