@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { userByKey } from './users'
 import { readState } from './api'
 import {
@@ -19,6 +19,38 @@ import {
  */
 /** The department picker on this form: an optional filter, which never collapses. */
 const DEPARTMENT_PICKER = { fieldName: 'departmentFilter', collapses: false }
+
+/** The route of a hash-routed address and the parameters that follow it. */
+const hashRoute = (url: URL): { route: string; params: URLSearchParams } => {
+    const fragment = url.hash.replace(/^#/, '')
+    const query = fragment.indexOf('?')
+    return query === -1
+        ? { route: fragment, params: new URLSearchParams() }
+        : {
+              route: fragment.slice(0, query),
+              params: new URLSearchParams(fragment.slice(query + 1)),
+          }
+}
+
+/**
+ * Whether `url` is the Tracker Capture dashboard the link `href` names: the
+ * same origin, path, and route, with each of the link's parameters. Tracker
+ * Capture rebuilds its route's parameters when the dashboard's selection
+ * changes, which can reorder them, so the addresses are compared by these
+ * parts rather than as strings.
+ */
+const isDashboardOf = (url: URL, href: string): boolean => {
+    const link = new URL(href)
+    if (url.origin !== link.origin || url.pathname !== link.pathname) return false
+    const expected = hashRoute(link)
+    const actual = hashRoute(url)
+    return (
+        actual.route === expected.route &&
+        Array.from(expected.params).every(([key, value]) =>
+            actual.params.getAll(key).includes(value)
+        )
+    )
+}
 
 test.describe('validation report', () => {
     test.use({ storageState: userByKey('atReport').storageState })
@@ -94,14 +126,46 @@ test.describe('validation report', () => {
         expect(page.url()).toBe(url)
 
         // Each patient links to its Tracker Capture dashboard on the DHIS2 the
-        // browser reaches, not the address the service reads from, in a new
-        // tab so the report stays on screen.
+        // browser reaches, not the address the service reads from. Every such
+        // link is marked to open in a new tab, which serves the ways of
+        // following it that bypass the app's click handler, such as the
+        // browser's context menu.
         const dashboards = report.locator('a[href*="/dhis-web-tracker-capture/"]')
         await expect(dashboards.first()).toBeVisible()
         const origin = new URL(page.url()).origin
         for (const link of await dashboards.all()) {
             expect(new URL((await link.getAttribute('href')) ?? '').origin).toBe(origin)
             await expect(link).toHaveAttribute('target', '_blank')
+        }
+
+        // A click on one is taken over by the app, which opens the tab itself:
+        // exactly one page opens, at the link's address, and the app keeps
+        // its URL and the report. The new page's address is checked once its
+        // navigation commits, so the check does not wait for Tracker Capture
+        // to load, and every page the click opened is closed again.
+        const dashboard = dashboards.first()
+        const href = (await dashboard.getAttribute('href')) ?? ''
+        const context = page.context()
+        const opened: Page[] = []
+        const recordOpened = (openedPage: Page): void => {
+            opened.push(openedPage)
+        }
+        context.on('page', recordOpened)
+        try {
+            const [dashboardPage] = await Promise.all([
+                context.waitForEvent('page'),
+                dashboard.click(),
+            ])
+            await dashboardPage.waitForURL((address) => isDashboardOf(address, href), {
+                waitUntil: 'commit',
+            })
+            expect(page.url()).toBe(url)
+            await expect(report).toBeAttached()
+            expect(opened).toHaveLength(1)
+            expect(opened[0]).toBe(dashboardPage)
+        } finally {
+            context.off('page', recordOpened)
+            for (const openedPage of opened) await openedPage.close()
         }
     })
 

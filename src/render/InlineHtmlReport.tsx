@@ -21,7 +21,7 @@ interface InlineHtmlReportProps {
  * through as raw text — and Quarto's `minimal` HTML ships no math renderer of
  * its own (its MathJax loader lives in the stripped `<head>`), so the app
  * renders it here with bundled KaTeX: no CDN, CSP-safe. Only `$$`/`\[`/`\(`
- * delimiters are recognised (not bare `$`) to avoid mis-parsing stray dollar
+ * delimiters are recognized (not bare `$`) to avoid mis-parsing stray dollar
  * signs in the report body. `throwOnError: false` renders a malformed formula
  * as its source rather than aborting the whole pass.
  */
@@ -64,6 +64,15 @@ const leavingWebAddress = (address: string): string | null => {
     }
     return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null
 }
+
+/**
+ * Whether the browser saves the file at the web address `url` rather than
+ * following `link` to it: `link` has a `download` attribute, and `url` is of
+ * the app's own origin. Browsers ignore the attribute for any other origin
+ * and follow such a link like any other.
+ */
+const isHonouredDownload = (link: Element, url: string): boolean =>
+    link.hasAttribute('download') && new URL(url).origin === window.location.origin
 
 /**
  * The element of the report `fragment` names, looked up by id: the text as
@@ -125,12 +134,18 @@ const focusFragmentTarget = (container: HTMLElement, fragment: string): void => 
  * which arrives as `auxclick`. For a link to a place in the report that is
  * necessary: a browser left to handle either would open the app's own
  * address in a new tab, which lands on its first page rather than on the
- * report. A web link is treated the same way, so every way of following a
- * link behaves alike and every tab opened for one is opened here with
- * `noopener`; the browser's own variants, such as a background tab for a
- * Ctrl-click, give way to a new tab. Other buttons, and links of any other
- * scheme, are left to the browser, and a click a script of the report has
- * already cancelled is left to that script.
+ * report. A web link is treated the same way, so every tab opened for one is
+ * opened here with `noopener`. The browser still chooses the kind of tab or
+ * window from the modifier keys: Chromium opens a background tab for a
+ * Ctrl-click and a new window for a Shift-click, as it does for the link
+ * itself.
+ *
+ * A link with a `download` attribute to an address of the app's own origin is
+ * left to the browser, which saves the file rather than showing it in a tab;
+ * for any other origin browsers ignore the attribute, so such a link is a web
+ * link like any other. Other buttons, and links of any other scheme, are left
+ * to the browser, and a click a script of the report has already cancelled is
+ * left to that script.
  */
 const followLink = (event: MouseEvent): void => {
     if (event.defaultPrevented) return
@@ -148,7 +163,7 @@ const followLink = (event: MouseEvent): void => {
         return
     }
     const leaving = leavingWebAddress(address)
-    if (leaving === null) return
+    if (leaving === null || isHonouredDownload(link, leaving)) return
     event.preventDefault()
     window.open(leaving, '_blank', 'noopener,noreferrer')
 }
@@ -158,12 +173,15 @@ const followLink = (event: MouseEvent): void => {
  * tab without an opener or a referrer. A click on one is handled by
  * {@link followLink}; the attributes serve the ways of following a link that
  * bypass it, such as the browser's context menu, and a click that a script of
- * the report stops before it reaches the report's container.
+ * the report stops before it reaches the report's container. A link whose
+ * `download` attribute the browser honours is left as it is, as it is by
+ * {@link followLink}.
  */
 const markLeavingLinks = (container: HTMLElement): void => {
     for (const link of Array.from(container.querySelectorAll('a'))) {
         const address = linkAddress(link)
-        if (address === null || leavingWebAddress(address) === null) continue
+        const leaving = address === null ? null : leavingWebAddress(address)
+        if (leaving === null || isHonouredDownload(link, leaving)) continue
         link.setAttribute('target', '_blank')
         const rel = new Set((link.getAttribute('rel') ?? '').split(/\s+/).filter(Boolean))
         rel.add('noopener')

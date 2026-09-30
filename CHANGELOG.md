@@ -47,8 +47,14 @@ Unreleased until it is versioned.
 - With the report language left blank, the Partner and Reference Reports were rendered in the
   browser's language, although the form said they would follow the DHIS2 user setting. A blank
   report language now selects the DHIS2 interface language when the report is available in it, and
-  English otherwise, on these two forms and on the Validation Report's. The Partner Report's JSON
-  dataset download, which carries codes rather than text, still sends no language.
+  English otherwise, on these two forms and on the Validation Report's. Generate waits for the list
+  of the report's languages to load; when the list cannot be loaded, the request carries no
+  language, and the reporting service chooses one from the browser's languages. The Partner
+  Report's JSON dataset download, which carries codes rather than text, sends no language, not even
+  one picked in the form, since the reporting service can refuse a language for that download that
+  it accepts for the report.
+- A failure to load a report's content presets also hid the language choice on the Partner and
+  Reference Report forms. The two now load independently.
 
 ## [0.1.0-alpha] - 2026-09-07
 

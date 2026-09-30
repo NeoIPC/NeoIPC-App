@@ -28,6 +28,8 @@ const FRAGMENT = `
 <p><a id="bare-anchor">An anchor without an address</a></p>
 <h3><a id="dashboard" href="https://dhis.example/dhis-web-tracker-capture/index.html#/dashboard?tei=T1" rel="external">P1</a></h3>
 <p><a id="support" href="mailto:support@example.org">Support</a></p>
+<p><a id="table-file" href="tables/problems.csv" download>The problems as a table</a></p>
+<p><a id="foreign-file" href="https://example.org/problems.csv" download>The problems elsewhere</a></p>
 <svg><a id="figure-source" xlink:href="https://example.org/figure-source"><text id="figure-label">Source</text></a></svg>
 `
 
@@ -253,5 +255,29 @@ describe('InlineHtmlReport', () => {
         expect(support.hasAttribute('target')).toBe(false)
         expect(dispatch(support, 'click')).toBe(false)
         expect(opened).not.toHaveBeenCalled()
+    })
+
+    // A browser saves the file a `download` link of the document's own origin
+    // names; opened in a tab, it would be shown instead and lose its name.
+    it('leaves a download link of the app\'s own origin to the browser, which saves the file', () => {
+        const tableFile = element('table-file')
+
+        expect(tableFile.hasAttribute('target')).toBe(false)
+        expect(tableFile.hasAttribute('rel')).toBe(false)
+        expect(dispatch(tableFile, 'click')).toBe(false)
+        expect(dispatch(tableFile, 'auxclick', 1)).toBe(false)
+        expect(opened).not.toHaveBeenCalled()
+    })
+
+    // Browsers ignore `download` across origins and follow the link, which
+    // in place would replace the app.
+    it('opens a download link of another origin in a new tab, like any web link', () => {
+        const foreignFile = element('foreign-file')
+
+        expect(foreignFile.getAttribute('target')).toBe('_blank')
+        expect(dispatch(foreignFile, 'click')).toBe(true)
+        expect(opened.mock.calls).toEqual([
+            ['https://example.org/problems.csv', '_blank', 'noopener,noreferrer'],
+        ])
     })
 })

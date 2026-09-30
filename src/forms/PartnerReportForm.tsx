@@ -153,7 +153,7 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
     onSubmit,
     submitting = false,
 }) => {
-    const { presets, locales } = useReportConfig('partner-report')
+    const { presets, locales, localesError } = useReportConfig('partner-report')
     const { referenceDataSets } = useAppContext()
     const { isAdmin } = useAuthorities()
     const countryNames = useOrgUnitNames(COUNTRY_GROUP_CODE)
@@ -183,6 +183,10 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
     // today this is English alone and the picker is hidden; it reappears
     // automatically once a second language becomes render-ready.
     const hasLanguageChoice = (locales?.length ?? 0) > 1
+    // A blank report language is resolved against the locale list, so
+    // Generate waits for the list; if the list fails to load, a blank
+    // language is left out of the request.
+    const localesPending = locales === null && localesError === null
 
     const deptCountryCodes = useMemo(
         () =>
@@ -771,7 +775,12 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
                 </NoticeBox>
             )}
 
-            <Button primary type="submit" disabled={submitting} loading={submitting}>
+            <Button
+                primary
+                type="submit"
+                disabled={submitting || localesPending}
+                loading={submitting || localesPending}
+            >
                 {i18n.t('Generate')}
             </Button>
         </form>

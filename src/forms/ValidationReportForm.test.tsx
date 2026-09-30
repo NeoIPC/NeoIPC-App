@@ -41,9 +41,19 @@ describe('ValidationReportForm', () => {
     const renderForm = ({
         isAdmin = false,
         locales = ['en'],
-    }: { isAdmin?: boolean; locales?: string[] } = {}): void => {
+        localesError = null,
+    }: {
+        isAdmin?: boolean
+        locales?: string[] | null
+        localesError?: Error | null
+    } = {}): void => {
         mockedUseAuthorities.mockReturnValue({ has: () => true, isAdmin })
-        mockedUseReportConfig.mockReturnValue({ presets: null, locales, error: null })
+        mockedUseReportConfig.mockReturnValue({
+            presets: null,
+            locales,
+            presetsError: null,
+            localesError,
+        })
         mockedUseValidationRules.mockReturnValue({ rules: CATALOGUE, error: null })
         act(() => root.render(<ValidationReportForm onSubmit={onSubmit} />))
     }
@@ -145,6 +155,36 @@ describe('ValidationReportForm', () => {
         submit()
 
         expect(onSubmit.mock.calls[0][0].locale).toBe('en')
+    })
+
+    it('shows Generate as loading, and does not generate, until the report languages load', () => {
+        i18n.language = 'de'
+        renderForm({ locales: null })
+
+        const generate = find<HTMLButtonElement>('button[type="submit"]')
+        expect(generate.disabled).toBe(true)
+        expect(generate.querySelector('[role="progressbar"]')).not.toBeNull()
+        click(generate)
+        expect(onSubmit).not.toHaveBeenCalled()
+
+        renderForm({ locales: ['de', 'en'] })
+
+        expect(generate.disabled).toBe(false)
+        click(generate)
+        expect(onSubmit).toHaveBeenCalledTimes(1)
+        expect(onSubmit.mock.calls[0][0].locale).toBe('de')
+    })
+
+    it('sends no language for a blank report language when the report languages failed to load', () => {
+        i18n.language = 'de'
+        renderForm({ locales: null, localesError: new Error('502 Bad Gateway') })
+
+        const generate = find<HTMLButtonElement>('button[type="submit"]')
+        expect(generate.disabled).toBe(false)
+        click(generate)
+
+        expect(onSubmit).toHaveBeenCalledTimes(1)
+        expect(onSubmit.mock.calls[0][0].locale).toBe('')
     })
 
     // Departments of the same name in two hospitals are told apart only by

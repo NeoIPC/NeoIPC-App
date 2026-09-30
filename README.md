@@ -121,7 +121,7 @@ those files: it commits translations back itself, so a change made here is eithe
 turns into a conflict. The template they are generated from, `i18n/en.pot`, belongs to this
 repository — `yarn build` produces it from the source and bundles the translated catalogues into
 the app. `yarn i18n:extract` alone is not a substitute: it leaves out the app title, its
-description and the command-palette shortcuts, which only an extraction run as part of `build` or
+description, and the command-palette shortcuts, which only an extraction run as part of `build` or
 `start` adds.
 
 The surveillance content the reports themselves carry — the protocol, the report text, the

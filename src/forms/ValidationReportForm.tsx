@@ -64,7 +64,9 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
     onSubmit,
     submitting = false,
 }) => {
-    const { locales } = useReportConfig('validation-report', { presets: false })
+    const { locales, localesError } = useReportConfig('validation-report', {
+        presets: false,
+    })
     const { rules: catalogue, error: catalogueError } = useValidationRules()
     const { isAdmin } = useAuthorities()
     const rulesErrorId = useId()
@@ -79,6 +81,10 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
     )
 
     const hasLanguageChoice = (locales?.length ?? 0) > 1
+    // A blank report language is resolved against the locale list, so
+    // Generate waits for the list; if the list fails to load, a blank
+    // language is left out of the request.
+    const localesPending = locales === null && localesError === null
     const allIds = useMemo(() => (catalogue ?? []).map((rule) => rule.id), [catalogue])
     // An empty catalogue offers nothing to choose, so it is treated like one
     // that failed to load: the request leaves `rules` out and the report
@@ -293,7 +299,12 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
                 </NoticeBox>
             )}
 
-            <Button primary type="submit" disabled={submitting} loading={submitting}>
+            <Button
+                primary
+                type="submit"
+                disabled={submitting || localesPending}
+                loading={submitting || localesPending}
+            >
                 {i18n.t('Generate')}
             </Button>
         </form>

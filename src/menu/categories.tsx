@@ -20,7 +20,7 @@ import type { AppAuthority } from '../authority/Authority'
 export interface MenuCategory {
     /** Hash-route segment, also the React key. */
     id: string
-    /** i18n-localised left-nav label. Evaluated on render so locale
+    /** i18n-localized left-nav label. Evaluated on render so locale
      *  switches re-translate the menu. */
     label: () => string
     /** `@dhis2/ui` icon element to render in the menu item. */

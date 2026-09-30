@@ -135,7 +135,7 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
     submitting = false,
 }) => {
     const { referenceDataSets } = useAppContext()
-    const { presets, locales } = useReportConfig('reference-report')
+    const { presets, locales, localesError } = useReportConfig('reference-report')
     const { isAdmin } = useAuthorities()
     const countryNames = useOrgUnitNames(COUNTRY_GROUP_CODE)
     const [values, setValues] = useState<ReferenceReportFormValues>(
@@ -170,6 +170,10 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
     // render-ready language; today English is the only one, so it stays hidden
     // (mirrors the Partner Report form).
     const hasLanguageChoice = (locales?.length ?? 0) > 1
+    // A blank report language is resolved against the locale list, so
+    // Generate waits for the list; if the list fails to load, a blank
+    // language is left out of the request.
+    const localesPending = locales === null && localesError === null
 
     const setField = <K extends keyof ReferenceReportFormValues>(key: K) =>
         (value: ReferenceReportFormValues[K]) =>
@@ -194,8 +198,8 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
     // `TEST_UNITS` holds departments, so this is the one picker the setting
     // can act on — a test department picked while the data layer drops it
     // would fail the render when picked alone and be left out of it when
-    // picked with others. Countries are
-    // never members, which is why that picker takes no exclusion.
+    // picked with others. Countries are never members, which is why that
+    // picker takes no exclusion.
     const departmentExcludeGroups = useMemo(
         () => (values.testUnitFilter === false ? [] : [TEST_UNITS_GROUP_CODE]),
         [values.testUnitFilter]
@@ -506,9 +510,11 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
                 primary
                 type="submit"
                 disabled={
-                    submitting || (!isAdmin && values.referenceDataId === '')
+                    submitting ||
+                    localesPending ||
+                    (!isAdmin && values.referenceDataId === '')
                 }
-                loading={submitting}
+                loading={submitting || localesPending}
             >
                 {i18n.t('Generate')}
             </Button>

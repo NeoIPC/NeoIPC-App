@@ -21,7 +21,7 @@ interface DateFieldProps {
  * (`ReportingPeriodFrom`, `ReportingPeriodTo`, etc.). Wraps
  * `@dhis2/ui`'s `CalendarInput` which calls `onDateSelect` with
  * `null` for "cleared" or `{ calendarDateString: 'YYYY-MM-DD' }` for
- * a selection — we normalise both to a plain string.
+ * a selection — we normalize both to a plain string.
  */
 const DateField: FC<DateFieldProps> = ({
     name,

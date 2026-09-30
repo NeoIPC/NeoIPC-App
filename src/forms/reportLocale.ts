@@ -8,30 +8,33 @@ export const languageSubtag = (tag: string | null | undefined): string =>
     (tag ?? '').split(/[-_]/)[0].toLowerCase() || 'en'
 
 /**
- * The `locale` a report request carries. A language the user picked is
- * sent as it is. With the field blank, it is the base subtag of
- * `interfaceLanguage` (the app's `i18n.language`, which the app platform
- * takes from the DHIS2 interface language) when the report's locale list
- * `available` contains it, and English otherwise, including while that
- * list has not loaded or failed to load.
+ * The `locale` a report request carries, where `''` sends none. A language
+ * the user picked is sent as it is. With the field blank, it is the base
+ * subtag of `interfaceLanguage` (the app's `i18n.language`, which the app
+ * platform takes from the DHIS2 interface language) when the report's
+ * locale list `available` contains it, and English when it does not. With
+ * the list unknown (`null`), a blank field stays blank, so the request
+ * carries no language and the service chooses one from the browser's
+ * `Accept-Language`. The forms do not submit while the list is loading, so
+ * an unknown list there is one that failed to load.
  */
 export const resolveReportLocale = (
     chosen: string,
     interfaceLanguage: string | null | undefined,
     available: readonly string[] | null
 ): string => {
-    if (chosen !== '') return chosen
+    if (chosen !== '' || available === null) return chosen
     const subtag = languageSubtag(interfaceLanguage)
-    return (available ?? []).some((tag) => tag.toLowerCase() === subtag) ? subtag : 'en'
+    return available.some((tag) => tag.toLowerCase() === subtag) ? subtag : 'en'
 }
 
 /**
  * The form values a report form submits, with the report language
  * resolved by {@link resolveReportLocale}. The Partner Report's JSON
- * dataset is left as it is: it carries codes rather than text, and the
- * service checks a language sent with it against that producer's own list
- * rather than the report's, so a language sent for it adds nothing and can
- * turn a download into a refusal.
+ * dataset is sent without a language, whatever the field holds: it carries
+ * codes rather than text, and the service checks a language sent with it
+ * against that producer's own list rather than the report's, so a language
+ * sent for it adds nothing and can turn a download into a refusal.
  */
 export const withReportLocale = <T extends { locale: string; outputFormat: string }>(
     values: T,
@@ -39,5 +42,5 @@ export const withReportLocale = <T extends { locale: string; outputFormat: strin
     available: readonly string[] | null
 ): T =>
     values.outputFormat === 'json'
-        ? values
+        ? { ...values, locale: '' }
         : { ...values, locale: resolveReportLocale(values.locale, interfaceLanguage, available) }

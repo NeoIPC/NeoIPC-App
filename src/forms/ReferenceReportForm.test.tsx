@@ -41,7 +41,12 @@ describe('ReferenceReportForm', () => {
             referenceDataSets: [],
             reloadReferenceDataSets: jest.fn().mockResolvedValue(undefined),
         })
-        mockedUseReportConfig.mockReturnValue({ presets: {}, locales: ['de', 'en'], error: null })
+        mockedUseReportConfig.mockReturnValue({
+            presets: {},
+            locales: ['de', 'en'],
+            presetsError: null,
+            localesError: null,
+        })
         host = document.createElement('div')
         document.body.appendChild(host)
         root = createRoot(host)
@@ -62,6 +67,21 @@ describe('ReferenceReportForm', () => {
         act(() => host.querySelector('form')?.requestSubmit())
     }
 
+    const generateButton = (): HTMLButtonElement => {
+        const button = host.querySelector<HTMLButtonElement>('button[type="submit"]')
+        if (!button) throw new Error('no Generate button on the page')
+        return button
+    }
+
+    const withLocales = (locales: string[] | null, localesError: Error | null = null): void => {
+        mockedUseReportConfig.mockReturnValue({
+            presets: {},
+            locales,
+            presetsError: null,
+            localesError,
+        })
+    }
+
     it.each([
         ['de-DE', 'de'],
         ['fr', 'en'],
@@ -77,6 +97,37 @@ describe('ReferenceReportForm', () => {
             expect(onSubmit.mock.calls[0][0].locale).toBe(sent)
         }
     )
+
+    it('shows Generate as loading, and does not generate, until the report languages load', () => {
+        i18n.language = 'de-DE'
+        withLocales(null)
+        render()
+
+        expect(generateButton().disabled).toBe(true)
+        expect(generateButton().querySelector('[role="progressbar"]')).not.toBeNull()
+        act(() => generateButton().click())
+        expect(onSubmit).not.toHaveBeenCalled()
+
+        withLocales(['de', 'en'])
+        render()
+
+        expect(generateButton().disabled).toBe(false)
+        act(() => generateButton().click())
+        expect(onSubmit).toHaveBeenCalledTimes(1)
+        expect(onSubmit.mock.calls[0][0].locale).toBe('de')
+    })
+
+    it('sends no language for a blank report language when the report languages failed to load', () => {
+        i18n.language = 'de-DE'
+        withLocales(null, new Error('502 Bad Gateway'))
+        render()
+
+        expect(generateButton().disabled).toBe(false)
+        act(() => generateButton().click())
+
+        expect(onSubmit).toHaveBeenCalledTimes(1)
+        expect(onSubmit.mock.calls[0][0].locale).toBe('')
+    })
 
     // Departments of the same name in two hospitals are told apart only by
     // the hospital the label names.
