@@ -29,6 +29,14 @@ Unreleased until it is versioned.
   presets like the other tables; it needs a NeoIPC-Reporting that accepts
   `includeValidationSummaryTable`.
 
+### Fixed
+
+- A link to a place in an HTML report shown in the app, such as a cross-reference to a table or to a
+  problem's details, sent the app to its first page and discarded the report, because the app routes
+  on the part of the address such a link changes. It now scrolls to its target and moves the focus
+  there. A web link that leaves the report, such as a patient's Tracker Capture dashboard, opens in a
+  new tab, so the report stays on screen.
+
 ## [0.1.0-alpha] - 2026-09-07
 
 ### Added

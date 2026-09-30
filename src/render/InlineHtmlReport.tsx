@@ -4,10 +4,9 @@ import React, { FC, useEffect, useRef } from 'react'
 
 /**
  * Container id the backend's fragment-mode transformer prefix-scopes
- * the report's CSS to (see
- * `tasks/neoipc-reporting-html-fragment-mode.md`). Has to match the
- * `container` parameter the backend emits in `Content-Type:
- * text/html; profile="neoipc-fragment"; container="#neoipc-rendered-report"`.
+ * the report's CSS to. Has to match the `container` parameter the
+ * backend emits in `Content-Type: text/html; profile="neoipc-fragment";
+ * container="#neoipc-rendered-report"`.
  */
 export const REPORT_CONTAINER_ID = 'neoipc-rendered-report'
 
@@ -42,27 +41,93 @@ const typesetMath = (container: HTMLElement): void => {
 }
 
 /**
+ * The element of the report `fragment` names, looked up the way a browser
+ * resolves a fragment: by the text as written first, then percent-decoded.
+ */
+const findFragmentTarget = (container: HTMLElement, fragment: string): HTMLElement | undefined => {
+    const byId = (id: string) =>
+        Array.from(container.querySelectorAll<HTMLElement>('[id]')).find((element) => element.id === id)
+    const asWritten = byId(fragment)
+    if (asWritten) return asWritten
+    try {
+        return byId(decodeURIComponent(fragment))
+    } catch {
+        return undefined
+    }
+}
+
+/**
+ * Follow a link to a place in the report without navigating. The app routes on
+ * the URL's fragment (`#/reports/…`), so letting the browser follow
+ * `href="#sec-problem-details-3"` would hand the router a route that does not
+ * exist, and its fallback redirect would unmount the page and discard the
+ * report. The target is scrolled into view and takes the focus, the way a skip
+ * link hands it over, so keyboard and screen-reader users continue from there;
+ * the browser's own fragment navigation would focus nothing for a section.
+ * A middle click arrives as `auxclick` and is followed in place too: a new tab
+ * of the app would open on its first page, not on the report.
+ */
+const followLinkWithinReport = (event: MouseEvent): void => {
+    if (event.type === 'auxclick' && event.button !== 1) return
+    const container = event.currentTarget
+    if (!(container instanceof HTMLElement) || !(event.target instanceof Element)) return
+    const link = event.target.closest('a[href^="#"]')
+    if (!link || !container.contains(link)) return
+    event.preventDefault()
+
+    const target = findFragmentTarget(container, (link.getAttribute('href') ?? '#').slice(1))
+    if (!target) return
+    target.scrollIntoView({ block: 'start' })
+    if (!target.matches('a[href], button, input, select, textarea, [tabindex]')) {
+        target.setAttribute('tabindex', '-1')
+    }
+    target.focus({ preventScroll: true })
+}
+
+/**
+ * Open the web links that leave the report, such as a patient's Tracker
+ * Capture dashboard, in a new tab, so the report stays on screen: following
+ * one in place replaces the app and discards the rendered report. `noopener`
+ * keeps the opened page from reaching back into the app through
+ * `window.opener`. Other schemes (`mailto:`) are left to the browser.
+ */
+const openLeavingLinksInNewTab = (container: HTMLElement): void => {
+    for (const link of Array.from(container.querySelectorAll<HTMLAnchorElement>('a[href]'))) {
+        if ((link.getAttribute('href') ?? '').startsWith('#')) continue
+        if (link.protocol !== 'http:' && link.protocol !== 'https:') continue
+        link.target = '_blank'
+        const rel = new Set((link.getAttribute('rel') ?? '').split(/\s+/).filter(Boolean))
+        rel.add('noopener')
+        rel.add('noreferrer')
+        link.setAttribute('rel', Array.from(rel).join(' '))
+    }
+}
+
+/**
  * Render an HTML fragment returned by `fragmentMode=true` from the
  * NeoIPC-Reporting backend. The fragment has no `<html>`/`<head>`/
  * `<body>` wrappers and any `<style>` blocks are already prefix-scoped
  * to `#${REPORT_CONTAINER_ID}`.
  *
- * Two operations the backend can't do for us:
+ * What the backend can't do for us:
  *
  *   1. Inject the markup. We use `innerHTML` rather than React tree
  *      mounting because the fragment is opaque Quarto output — its
  *      tags / attribute names aren't React-compatible (`class` vs
  *      `className`, `tabindex` vs `tabIndex`, custom widget elements,
  *      etc.) and React would refuse to mount it.
- *   2. Re-execute scripts. Browsers don't execute `<script>` tags
+ *   2. Typeset the math the report carries as text (see `typesetMath`).
+ *   3. Adapt the links to the app: a link to a place in the report
+ *      scrolls there instead of navigating, and a web link that leaves
+ *      the report opens in a new tab.
+ *   4. Re-execute scripts. Browsers don't execute `<script>` tags
  *      inserted via `innerHTML`; htmlwidgets (plotly, leaflet, DT)
  *      need their bootstraps to run, so we replace each with a fresh
  *      element. External `src` scripts get a load gate so subsequent
  *      inline scripts see their globals.
  *
- * If a future report ships interactive widgets that misbehave outside
- * their original document context, the fix is to wrap the container
- * in a Shadow DOM root — this component is the boundary.
+ * The report shares the app's document; this component is the boundary
+ * at which a widget that needs a document of its own would be isolated.
  */
 const InlineHtmlReport: FC<InlineHtmlReportProps> = ({ fragmentHtml }) => {
     const containerRef = useRef<HTMLDivElement>(null)
@@ -74,6 +139,9 @@ const InlineHtmlReport: FC<InlineHtmlReportProps> = ({ fragmentHtml }) => {
         let cancelled = false
         container.innerHTML = fragmentHtml
         typesetMath(container)
+        openLeavingLinksInNewTab(container)
+        container.addEventListener('click', followLinkWithinReport)
+        container.addEventListener('auxclick', followLinkWithinReport)
 
         const reExecute = async () => {
             const scripts = Array.from(container.querySelectorAll('script'))
@@ -89,6 +157,8 @@ const InlineHtmlReport: FC<InlineHtmlReportProps> = ({ fragmentHtml }) => {
 
         return () => {
             cancelled = true
+            container.removeEventListener('click', followLinkWithinReport)
+            container.removeEventListener('auxclick', followLinkWithinReport)
             container.innerHTML = ''
         }
     }, [fragmentHtml])

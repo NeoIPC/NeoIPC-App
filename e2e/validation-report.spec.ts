@@ -48,6 +48,39 @@ test.describe('validation report', () => {
         const report = await expectRenderedReport(page)
         // The header names the rules the document rests on.
         await expect(report).toContainText(/All \d+ rules/)
+
+        // The seeded department's one open enrolment, E2E-TC-FIXTURE's, has no
+        // Surveillance-End form and is older than the 120 days rule 43 allows,
+        // so the report lists it with a reference to the problem's details.
+        const reference = report.locator('a[href^="#sec-problem-details-"]').first()
+        await expect(
+            reference,
+            'AT_TEST_TEST needs a validation finding: the rule-43 enrolment of E2E-TC-FIXTURE'
+        ).toBeAttached()
+
+        // Following the reference leaves the URL alone (the app routes on its
+        // fragment) and hands the focus to the details, which only the app's
+        // handler does: the browser's own fragment navigation would leave it
+        // on the page. That the details are in view afterwards holds whether
+        // or not they had to be scrolled to.
+        const detailsId = ((await reference.getAttribute('href')) ?? '#').slice(1)
+        const url = page.url()
+        await reference.click()
+        const details = report.locator(`[id="${detailsId}"]`)
+        await expect(details).toBeFocused()
+        await expect(details).toBeInViewport()
+        expect(page.url()).toBe(url)
+
+        // Each patient links to its Tracker Capture dashboard on the DHIS2 the
+        // browser reaches, not the address the service reads from, in a new
+        // tab so the report stays on screen.
+        const dashboards = report.locator('a[href*="/dhis-web-tracker-capture/"]')
+        await expect(dashboards.first()).toBeVisible()
+        const origin = new URL(page.url()).origin
+        for (const link of await dashboards.all()) {
+            expect(new URL((await link.getAttribute('href')) ?? '').origin).toBe(origin)
+            await expect(link).toHaveAttribute('target', '_blank')
+        }
     })
 
     test('PDF output triggers a PDF download', async ({ page }) => {
