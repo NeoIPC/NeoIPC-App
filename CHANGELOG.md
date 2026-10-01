@@ -10,6 +10,8 @@ Unreleased until it is versioned.
 
 ## [Unreleased]
 
+## [0.2.0-alpha] - 2026-10-01
+
 ### Added
 
 - A test that fails when a report form's initial value disagrees with the report schema's default
@@ -23,10 +25,11 @@ Unreleased until it is versioned.
   language where it is translated, so a rule the report gains appears without an app release; every
   rule is applied until the user narrows the selection. "Select all" restores every rule, and "Clear
   all" unticks them all so a few can be picked. Administrators can also include the test
-  departments. The page needs NeoIPC-Reporting with the `/validation-report` endpoints.
+  departments. The page needs NeoIPC-Reporting 0.4.0 or later, which serves the
+  `/validation-report` endpoints.
 - A "Data validation summary table" content toggle on the Partner and Reference Report forms, for
   the table the reports show first after their header. It is on by default and follows the content
-  presets like the other tables; it needs a NeoIPC-Reporting that accepts
+  presets like the other tables; it needs NeoIPC-Reporting 0.4.0 or later, which accepts
   `includeValidationSummaryTable`.
 
 ### Changed
@@ -113,6 +116,7 @@ First published version.
   target languages hold a single translated label (German) in this version, so the interface is in
   practice English.
 
-[Unreleased]: https://github.com/NeoIPC/NeoIPC-App/compare/v0.1.0-alpha...HEAD
+[Unreleased]: https://github.com/NeoIPC/NeoIPC-App/compare/v0.2.0-alpha...HEAD
+[0.2.0-alpha]: https://github.com/NeoIPC/NeoIPC-App/compare/v0.1.0-alpha...v0.2.0-alpha
 [0.1.0-alpha]: https://github.com/NeoIPC/NeoIPC-App/compare/v0.0.1-alpha...v0.1.0-alpha
 [0.0.1-alpha]: https://github.com/NeoIPC/NeoIPC-App/releases/tag/v0.0.1-alpha
