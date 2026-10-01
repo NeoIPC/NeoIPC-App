@@ -82,6 +82,48 @@ describe('ReferenceReportForm', () => {
         })
     }
 
+    const withPresets = (presetsError: Error | null): void => {
+        mockedUseReportConfig.mockReturnValue({
+            presets: null,
+            locales: ['en'],
+            presetsError,
+            localesError: null,
+        })
+    }
+
+    const openMoreOptions = (): void => {
+        const toggle = Array.from(host.querySelectorAll('button')).find((button) =>
+            button.textContent?.includes('More options')
+        )
+        if (!toggle) throw new Error('no More options section on the page')
+        act(() => toggle.click())
+    }
+
+    /** A content option the presets govern. */
+    const governedCheckbox = (): HTMLInputElement => {
+        const box = host.querySelector<HTMLInputElement>('input[name="includeBirthWeightFigure"]')
+        if (!box) throw new Error('no content checkbox on the page')
+        return box
+    }
+
+    it('falls back to Custom, with the content options unlocked, when the presets failed to load', () => {
+        withPresets(new Error('502 Bad Gateway'))
+        render()
+        openMoreOptions()
+
+        expect(governedCheckbox().disabled).toBe(false)
+        expect(host.textContent).toContain('The content presets could not be loaded')
+    })
+
+    it('keeps the content options locked while the presets are loading', () => {
+        withPresets(null)
+        render()
+        openMoreOptions()
+
+        expect(governedCheckbox().disabled).toBe(true)
+        expect(host.textContent).not.toContain('The content presets could not be loaded')
+    })
+
     it.each([
         ['de-DE', 'de'],
         ['fr', 'en'],

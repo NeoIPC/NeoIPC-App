@@ -53,8 +53,10 @@ Unreleased until it is versioned.
   Report's JSON dataset download, which carries codes rather than text, sends no language, not even
   one picked in the form, since the reporting service can refuse a language for that download that
   it accepts for the report.
-- A failure to load a report's content presets also hid the language choice on the Partner and
-  Reference Report forms. The two now load independently.
+- A failure to load a report's content presets hid the language choice on the Partner and Reference
+  Report forms and left their preset picker loading for good, with the content options locked. The
+  presets and the languages now load independently, and without the presets the forms fall back to
+  Custom, with the content options unlocked and a note that the presets could not be loaded.
 
 ## [0.1.0-alpha] - 2026-09-07
 

@@ -135,7 +135,7 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
     submitting = false,
 }) => {
     const { referenceDataSets } = useAppContext()
-    const { presets, locales, localesError } = useReportConfig('reference-report')
+    const { presets, presetsError, locales, localesError } = useReportConfig('reference-report')
     const { isAdmin } = useAuthorities()
     const countryNames = useOrgUnitNames(COUNTRY_GROUP_CODE)
     const [values, setValues] = useState<ReferenceReportFormValues>(
@@ -165,7 +165,10 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
         )
     }, [datasetPreselected, referenceDataSets])
 
-    const presetLocked = preset !== CUSTOM_PRESET
+    // Without its presets the form offers only Custom, so the content
+    // controls unlock at the values they hold.
+    const effectivePreset = presetsError === null ? preset : CUSTOM_PRESET
+    const presetLocked = effectivePreset !== CUSTOM_PRESET
     // Only offer a language picker when the backend advertises more than one
     // render-ready language; today English is the only one, so it stays hidden
     // (mirrors the Partner Report form).
@@ -401,7 +404,8 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
                 <h3>{i18n.t('Content')}</h3>
                 <PresetSelect
                     presets={presets}
-                    value={preset}
+                    failed={presetsError !== null}
+                    value={effectivePreset}
                     onChange={applyPreset}
                 />
                 <div className={styles.checkboxGrid}>

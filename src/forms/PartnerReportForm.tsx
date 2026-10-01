@@ -153,7 +153,7 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
     onSubmit,
     submitting = false,
 }) => {
-    const { presets, locales, localesError } = useReportConfig('partner-report')
+    const { presets, presetsError, locales, localesError } = useReportConfig('partner-report')
     const { referenceDataSets } = useAppContext()
     const { isAdmin } = useAuthorities()
     const countryNames = useOrgUnitNames(COUNTRY_GROUP_CODE)
@@ -177,7 +177,10 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
         [submitAttempted, values]
     )
 
-    const presetLocked = preset !== CUSTOM_PRESET
+    // Without its presets the form offers only Custom, so the content
+    // controls unlock at the values they hold.
+    const effectivePreset = presetsError === null ? preset : CUSTOM_PRESET
+    const presetLocked = effectivePreset !== CUSTOM_PRESET
     // Only offer a language picker when there is a genuine choice. The
     // backend advertises only render-ready languages (its allowlist), so
     // today this is English alone and the picker is hidden; it reappears
@@ -431,7 +434,8 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
         <>
             <PresetSelect
                 presets={presets}
-                value={preset}
+                failed={presetsError !== null}
+                value={effectivePreset}
                 onChange={applyPreset}
             />
             <div className={styles.checkboxGrid}>
