@@ -3,11 +3,13 @@ import { fetchNeoipcReporting } from './neoipcReporting'
 import { includeElementKeys } from '../forms/enums'
 import type { PartnerReportFormValues } from '../forms/PartnerReportForm'
 import type { ReferenceReportFormValues } from '../forms/ReferenceReportForm'
+import type { ValidationReportFormValues } from '../forms/ValidationReportForm'
 
 /**
  * What the user picked in the form's "Output format" radio. Drives the
  * `Accept` header on the request and the post-response branch in
- * {@link renderPartnerReport} / {@link renderReferenceReport}.
+ * {@link renderPartnerReport} / {@link renderReferenceReport} /
+ * {@link renderValidationReport}.
  */
 export type OutputFormat = 'html' | 'pdf' | 'json'
 
@@ -154,6 +156,27 @@ export const buildPartnerReportQuery = (
 }
 
 /**
+ * Build the `URLSearchParams` for `GET /validation-report`. Empty form
+ * values are dropped. `rules` is sent as repeated keys only for an explicit
+ * selection: `null` selects every rule, which the report applies when the
+ * parameter is absent, so the default request stays short.
+ */
+export const buildValidationReportQuery = (
+    values: ValidationReportFormValues,
+    format: OutputFormat
+): URLSearchParams => {
+    const qs = new URLSearchParams()
+    appendString(qs, 'locale', values.locale)
+    appendArray(qs, 'departmentFilter', values.departmentFilter)
+    if (values.rules !== null) {
+        appendArray(qs, 'rules', values.rules.map(String))
+    }
+    appendBool(qs, 'includeTestData', values.includeTestData)
+    if (format === 'html') qs.append('fragmentMode', 'true')
+    return qs
+}
+
+/**
  * RFC 6266 / 5987 `Content-Disposition: attachment` parser scoped to
  * the two encodings the backend emits (`filename="..."` ASCII and
  * `filename*=UTF-8''...` percent-encoded). Returns `null` if the
@@ -234,6 +257,35 @@ export const renderReferenceReport = async (
         }
     )
     return readRenderResult(response, format, 'reference-report')
+}
+
+/**
+ * Render the Validation Report: `GET /validation-report`, with the `Accept`
+ * header and `fragmentMode` branching on
+ * {@link ValidationReportFormValues.outputFormat}. An empty `rules` selection
+ * is refused before any request: a query string cannot tell an empty list
+ * from an absent one, and the service applies every rule when `rules` is
+ * absent, so the request would run the opposite of what was asked.
+ */
+export const renderValidationReport = async (
+    baseUrl: string,
+    values: ValidationReportFormValues
+): Promise<RenderResult> => {
+    if (values.rules !== null && values.rules.length === 0) {
+        throw new Error(i18n.t('Select at least one validation rule.'))
+    }
+
+    const format = values.outputFormat
+    const qs = buildValidationReportQuery(values, format)
+    const response = await fetchNeoipcReporting(
+        baseUrl,
+        `/validation-report?${qs.toString()}`,
+        {
+            method: 'GET',
+            headers: { Accept: ACCEPT_BY_FORMAT[format] },
+        }
+    )
+    return readRenderResult(response, format, 'validation-report')
 }
 
 /**

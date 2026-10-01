@@ -39,6 +39,7 @@ import { matchReferenceData, BenchmarkMatch } from './referenceDataMatch'
 import type { OutputFormat } from '../api/reports'
 import { governedKeys, resolvePresetValues } from './applyPreset'
 import { languageLabel } from './languageLabel'
+import { withReportLocale } from './reportLocale'
 import { hasErrors, validatePartnerReport } from './reportValidation'
 import { useReportConfig } from './useReportConfig'
 import {
@@ -80,6 +81,7 @@ export interface PartnerReportFormValues {
     includeIntroductionTexts: boolean
     includeMethodsTexts: boolean
     includeOutlierInterpretation: boolean
+    includeValidationSummaryTable: boolean
     includeBirthWeightFigure: boolean
     includeGestationalAgeFigure: boolean
     includeIncidenceDensityTable: boolean
@@ -123,6 +125,7 @@ export const defaultValues: PartnerReportFormValues = {
     includeIntroductionTexts: true,
     includeMethodsTexts: true,
     includeOutlierInterpretation: false,
+    includeValidationSummaryTable: true,
     includeBirthWeightFigure: true,
     includeGestationalAgeFigure: true,
     includeIncidenceDensityTable: true,
@@ -150,7 +153,7 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
     onSubmit,
     submitting = false,
 }) => {
-    const { presets, locales } = useReportConfig('partner-report')
+    const { presets, presetsError, locales, localesError } = useReportConfig('partner-report')
     const { referenceDataSets } = useAppContext()
     const { isAdmin } = useAuthorities()
     const countryNames = useOrgUnitNames(COUNTRY_GROUP_CODE)
@@ -174,12 +177,19 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
         [submitAttempted, values]
     )
 
-    const presetLocked = preset !== CUSTOM_PRESET
+    // Without its presets the form offers only Custom, so the content
+    // controls unlock at the values they hold.
+    const effectivePreset = presetsError === null ? preset : CUSTOM_PRESET
+    const presetLocked = effectivePreset !== CUSTOM_PRESET
     // Only offer a language picker when there is a genuine choice. The
     // backend advertises only render-ready languages (its allowlist), so
     // today this is English alone and the picker is hidden; it reappears
     // automatically once a second language becomes render-ready.
     const hasLanguageChoice = (locales?.length ?? 0) > 1
+    // A blank report language is resolved against the locale list, so
+    // Generate waits for the list; if the list fails to load, a blank
+    // language is left out of the request.
+    const localesPending = locales === null && localesError === null
 
     const deptCountryCodes = useMemo(
         () =>
@@ -201,11 +211,11 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
             ),
         [deptRows, values.unitCodes]
     )
-    // Test-unit departments (e.g. AT_TEST_TEST) are dropped by neoipcr
-    // unless include_test_data is set, so the picker offers them only when
-    // "Include test data" is checked — otherwise selecting one resolves to
-    // an empty org-unit set and the render fails. Switching the box off
-    // reconciles any already-selected test department out of the picker.
+    // Members of the `TEST_UNITS` group (e.g. AT_TEST_TEST2) are dropped by
+    // neoipcr unless include_test_data is set, so the picker offers them only
+    // when "Include test data" is checked — otherwise one picked alone fails
+    // the render and one picked with others is left out of it. Switching the
+    // box off reconciles any already-selected member out of the picker.
     const departmentExcludeGroups = useMemo(
         () => (values.includeTestData ? [] : [TEST_UNITS_GROUP_CODE]),
         [values.includeTestData]
@@ -424,7 +434,8 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
         <>
             <PresetSelect
                 presets={presets}
-                value={preset}
+                failed={presetsError !== null}
+                value={effectivePreset}
                 onChange={applyPreset}
             />
             <div className={styles.checkboxGrid}>
@@ -487,7 +498,7 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
         <SingleSelectField
             label={i18n.t('Report language')}
             helpText={i18n.t(
-                'Leave blank to use the locale from your DHIS2 user setting.'
+                'Leave blank to use your DHIS2 interface language if the report is available in it, and English otherwise.'
             )}
             selected={
                 values.locale === '' || (locales ?? []).includes(values.locale)
@@ -499,7 +510,7 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
         >
             <SingleSelectOption
                 value=""
-                label={i18n.t('(use DHIS2 user setting)')}
+                label={i18n.t('(interface language if available, otherwise English)')}
             />
             {(locales ?? []).map((loc) => (
                 <SingleSelectOption
@@ -530,7 +541,7 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
                 event.preventDefault()
                 setSubmitAttempted(true)
                 if (hasErrors(validatePartnerReport(values))) return
-                onSubmit?.(values)
+                onSubmit?.(withReportLocale(values, i18n.language, locales))
             }}
         >
             <Card>
@@ -768,7 +779,12 @@ const PartnerReportForm: FC<PartnerReportFormProps> = ({
                 </NoticeBox>
             )}
 
-            <Button primary type="submit" disabled={submitting} loading={submitting}>
+            <Button
+                primary
+                type="submit"
+                disabled={submitting || localesPending}
+                loading={submitting || localesPending}
+            >
                 {i18n.t('Generate')}
             </Button>
         </form>

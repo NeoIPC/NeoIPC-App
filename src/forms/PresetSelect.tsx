@@ -25,8 +25,10 @@ const presetLabel = (name: string): string => {
 }
 
 interface PresetSelectProps {
-    /** Server-defined presets (`null` while loading). */
+    /** Server-defined presets (`null` while loading, and when loading failed). */
     presets: PresetMap | null
+    /** Whether the presets failed to load; the selector then offers only Custom. */
+    failed?: boolean
     /** Currently-selected preset name (a server preset, or {@link CUSTOM_PRESET}). */
     value: string
     onChange: (preset: string) => void
@@ -36,9 +38,15 @@ interface PresetSelectProps {
  * Selector for a report's content preset. The server presets come from
  * `GET /<report>/presets`; selecting one fills (and the form then locks)
  * the governed content controls. The always-present "Custom" entry
- * unlocks them for individual editing.
+ * unlocks them for individual editing. When the presets failed to load,
+ * the selector stops loading and says so, and Custom is all it offers.
  */
-const PresetSelect: FC<PresetSelectProps> = ({ presets, value, onChange }) => {
+const PresetSelect: FC<PresetSelectProps> = ({
+    presets,
+    failed = false,
+    value,
+    onChange,
+}) => {
     const names = presets ? Object.keys(presets) : []
     // @dhis2/ui SingleSelect throws if `selected` names an option that
     // isn't rendered — which happens in the window before the server
@@ -53,7 +61,15 @@ const PresetSelect: FC<PresetSelectProps> = ({ presets, value, onChange }) => {
                 'A preset fills the content options below. Choose "Custom" to edit each one yourself.'
             )}
             selected={optionValues.has(value) ? value : undefined}
-            loading={presets === null}
+            loading={presets === null && !failed}
+            warning={failed}
+            validationText={
+                failed
+                    ? i18n.t(
+                          'The content presets could not be loaded; each content option below can be set by hand.'
+                      )
+                    : undefined
+            }
             onChange={({ selected }) => onChange(selected)}
         >
             {names.map((name) => (

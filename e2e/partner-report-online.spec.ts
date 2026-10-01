@@ -55,6 +55,12 @@ test.describe('partner report — online mode', () => {
 
         const report = await expectRenderedReport(page)
         await expect(report.locator('table').first()).toBeVisible()
+        // The data-validation summary is the first section after the header,
+        // and the form asks for it by default.
+        expect(request.url()).toContain('includeValidationSummaryTable=true')
+        await expect(
+            report.getByRole('heading', { name: 'Data Validation' })
+        ).toBeVisible()
     })
 
     test('PDF output triggers a PDF download', async ({ page }) => {

@@ -135,15 +135,20 @@ test.describe('reference report — admin live-fetch filters', () => {
         const { orgUnitDisplayNames } = readState()
         const testUnit = orgUnitDisplayNames.AT_TEST_TEST2
         const regular = orgUnitDisplayNames.AT_TEST_TEST
+        const hospital = orgUnitDisplayNames.AT_TEST
 
         // Everything below matches these two names as substrings of the open
         // menu's text, so the whole test turns on neither containing the other.
         // Their *codes* do — `AT_TEST_TEST` is a strict prefix of `AT_TEST_TEST2`
         // — so this is a real hazard one rename away, and a seed that tripped it
         // would make the assertions pass while distinguishing nothing. State it
-        // as a check rather than as an assumption.
+        // as a check rather than as an assumption. Each option reads "hospital —
+        // department", so the menu carries the hospital's name too, which must
+        // contain neither department's for the same reason.
         expect(testUnit).not.toContain(regular)
         expect(regular).not.toContain(testUnit)
+        expect(hospital).not.toContain(regular)
+        expect(hospital).not.toContain(testUnit)
 
         await openLiveFetchFilters(page)
 
@@ -171,21 +176,20 @@ test.describe('reference report — admin live-fetch filters', () => {
     })
 
     test('the live-fetch filters reach the request', async ({ page }) => {
-        const { orgUnitDisplayNames } = readState()
-
         await openLiveFetchFilters(page)
         await page.locator('input[name="testUnitFilter"]').check()
 
         await page.locator('[data-test="departmentFilter"]').click()
         // Exact, unlike the sibling test's substring matching over the whole menu:
         // that one guards the pair at runtime (`not.toContain`, both ways) before it
-        // relies on containment, and this one has no such guard. The labels here are
-        // bare display names — `showParentInLabel` is off for this form — so an exact
-        // match is available and costs nothing.
+        // relies on containment, and this one has no such guard. The option is
+        // picked by its org-unit code, which @dhis2/ui's MultiSelectOption carries
+        // as `data-value`, because its label is "hospital — department" on this
+        // form and a name alone matches no label exactly.
         await page
-            .locator('#dhis2-portal-root')
-            .getByText(orgUnitDisplayNames.AT_TEST_TEST, { exact: true })
-            .first()
+            .locator(
+                '#dhis2-portal-root [data-test="dhis2-uicore-multiselectoption"][data-value="AT_TEST_TEST"]'
+            )
             .click()
         await page.keyboard.press('Escape')
 

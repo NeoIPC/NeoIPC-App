@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-08-07T16:03:59.643Z\n"
-"PO-Revision-Date: 2026-08-07T16:03:59.643Z\n"
+"POT-Creation-Date: 2026-10-01T04:29:28.731Z\n"
+"PO-Revision-Date: 2026-10-01T04:29:28.732Z\n"
 
 msgid "Upload"
 msgstr "Upload"
@@ -138,6 +138,13 @@ msgstr ""
 msgid "One of the values contains characters that are not allowed."
 msgstr "One of the values contains characters that are not allowed."
 
+msgid ""
+"A validation rule you selected is no longer available. Reload the page to "
+"see the current rules."
+msgstr ""
+"A validation rule you selected is no longer available. Reload the page to "
+"see the current rules."
+
 msgid "The uploaded file is not a valid reference dataset."
 msgstr "The uploaded file is not a valid reference dataset."
 
@@ -162,6 +169,9 @@ msgstr "The report is not available in the requested format or language."
 msgid "The request could not be completed."
 msgstr "The request could not be completed."
 
+msgid "Select at least one validation rule."
+msgstr "Select at least one validation rule."
+
 msgid "Please select a data file before submitting."
 msgstr "Please select a data file before submitting."
 
@@ -179,6 +189,9 @@ msgstr "Rate"
 
 msgid "None"
 msgstr "None"
+
+msgid "Data validation summary table"
+msgstr "Data validation summary table"
 
 msgid "Birth weight figure"
 msgstr "Birth weight figure"
@@ -201,8 +214,8 @@ msgstr "Infectious agent detection rate table"
 msgid "Risk density rate table"
 msgstr "Risk density rate table"
 
-msgid "Antibiotic utilisation table"
-msgstr "Antibiotic utilisation table"
+msgid "Antibiotic utilization table"
+msgstr "Antibiotic utilization table"
 
 msgid "Surgical procedure rate table"
 msgstr "Surgical procedure rate table"
@@ -297,11 +310,15 @@ msgstr "Include methods texts"
 msgid "Report language"
 msgstr "Report language"
 
-msgid "Leave blank to use the locale from your DHIS2 user setting."
-msgstr "Leave blank to use the locale from your DHIS2 user setting."
+msgid ""
+"Leave blank to use your DHIS2 interface language if the report is available "
+"in it, and English otherwise."
+msgstr ""
+"Leave blank to use your DHIS2 interface language if the report is available "
+"in it, and English otherwise."
 
-msgid "(use DHIS2 user setting)"
-msgstr "(use DHIS2 user setting)"
+msgid "(interface language if available, otherwise English)"
+msgstr "(interface language if available, otherwise English)"
 
 msgid "Upload partner data file (JSON)"
 msgstr "Upload partner data file (JSON)"
@@ -401,6 +418,13 @@ msgid ""
 msgstr ""
 "A preset fills the content options below. Choose \"Custom\" to edit each "
 "one yourself."
+
+msgid ""
+"The content presets could not be loaded; each content option below can be "
+"set by hand."
+msgstr ""
+"The content presets could not be loaded; each content option below can be "
+"set by hand."
 
 msgid "Approximate match"
 msgstr "Approximate match"
@@ -505,11 +529,45 @@ msgstr "The \"from\" value must not exceed the \"to\" value."
 msgid "The start date must not be after the end date."
 msgstr "The start date must not be after the end date."
 
+msgid ""
+"All departments in your scope are test units. Turn on \"Include test data\" "
+"under More options to select them."
+msgstr ""
+"All departments in your scope are test units. Turn on \"Include test data\" "
+"under More options to select them."
+
+msgid "Leave empty to validate every department you can see."
+msgstr "Leave empty to validate every department you can see."
+
+msgid "Validation rules"
+msgstr "Validation rules"
+
+msgid "The rule list could not be loaded"
+msgstr "The rule list could not be loaded"
+
+msgid "The report applies every rule."
+msgstr "The report applies every rule."
+
+msgid "Loading the validation rules"
+msgstr "Loading the validation rules"
+
+msgid "Select all"
+msgstr "Select all"
+
+msgid "Clear all"
+msgstr "Clear all"
+
+msgid "Rule {{id}}"
+msgstr "Rule {{id}}"
+
 msgid "Partner Report"
 msgstr "Partner Report"
 
 msgid "Reference Report"
 msgstr "Reference Report"
+
+msgid "Validation Report"
+msgstr "Validation Report"
 
 msgid "Rendering report... (elapsed {{seconds}}s)"
 msgstr "Rendering report... (elapsed {{seconds}}s)"
@@ -538,6 +596,10 @@ msgstr "Partner Report"
 msgctxt "Title for shortcut used by command palette"
 msgid "__MANIFEST_SHORTCUT_Reference Report"
 msgstr "Reference Report"
+
+msgctxt "Title for shortcut used by command palette"
+msgid "__MANIFEST_SHORTCUT_Validation Report"
+msgstr "Validation Report"
 
 msgctxt "Title for shortcut used by command palette"
 msgid "__MANIFEST_SHORTCUT_Reference data"

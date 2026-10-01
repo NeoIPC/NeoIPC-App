@@ -10,13 +10,14 @@ DHIS2 origin — production fidelity, not the `yarn start:dev` proxy.
 
 | Spec | Covers |
 |------|--------|
-| `nav-authority` | Authority-filtered left-nav: superuser sees all four items; a report-only user sees the two report items and neither admin item. |
+| `nav-authority` | Authority-filtered left-nav: superuser sees all five items; a report-only user sees the three report items and neither admin item. |
 | `org-unit-picker` | Per-user department scoping (`withinUserHierarchy`): each report user sees only their country's department. |
 | `partner-report-online` | Online render: HTML mounts `#neoipc-rendered-report`; PDF triggers a `partner-report.pdf` download. |
 | `partner-report-data-file` | Render from an uploaded partner-data JSON, both formats. *(needs a real fixture — see [`fixtures/README.md`](fixtures/README.md); the spec self-skips without one)* |
 | `partner-report-json` | The JSON output round trip: download the department dataset the Partner Report is computed from, feed it back through the upload path, and get a report out — the one assertion that catches the R producer and the Quarto consumer drifting apart. |
 | `reference-report` | Render a stored reference dataset, both formats. *(needs a real fixture)* |
 | `reference-report-live-fetch` | The admin-only live-fetch filters, which the report-only persona never sees: that "Include test data" admits `TEST_UNITS` departments to the Departments picker only when checked, and that it and the department selection reach the request. *(runs with or without a stored dataset: with none, the dataset picker gives way to a notice and the form is already in live mode)* |
+| `validation-report` | Render for `AT_TEST_TEST`: HTML mounts `#neoipc-rendered-report` from a request carrying that department alone and no `rules`, since every rule is selected, and the report's header says "All N rules"; the content pane ends at or above the window's lower edge, and every screenshot fits the report's width; following a reference to a problem's details leaves the URL alone and focuses the details; every patient's Tracker Capture link points at the origin the suite runs on and is marked to open in a new tab, and a click on one opens exactly one new page at its address while the app keeps its URL and the report; PDF triggers a `NeoIPC-Surveillance-Validation-Report_<timestamp>.pdf` download; unchecking one rule sends every other rule and leaves that one out. |
 | `admin-crud` | reference-data list (upload → row → delete); validation-exceptions singleton (upload → current file → remove). |
 | `locale-switch` | `keyUiLocale=de` + reload flips the translated nav label. |
 | `a11y` | axe-core (WCAG 2.1 A + AA) over the main routes per persona, tolerating only known `@dhis2/ui` component defects. Chromium only — axe evaluates the DOM, which is identical across engines. |
@@ -32,14 +33,20 @@ DHIS2 origin — production fidelity, not the `yarn start:dev` proxy.
    and synthetic patients under `AT_TEST_TEST`. `AT_TEST_TEST2` must be in the
    `TEST_UNITS` group, and `AT_TEST_TEST` and `CH_TEST_TEST` must not, because
    the specs depend on that membership in both directions: the Partner Report
-   form drops `TEST_UNITS` members from its department picker unless "Include
-   test data" is checked, so the org-unit-picker and partner-report specs reach
-   `AT_TEST_TEST` and `CH_TEST_TEST` only while both are outside the group; and
+   and Validation Report forms drop `TEST_UNITS` members from their department
+   pickers unless "Include test data" is checked, so the org-unit-picker,
+   partner-report, and validation-report specs reach `AT_TEST_TEST` and
+   `CH_TEST_TEST` only while both are outside the group; and
    the reference-report live-fetch spec reads the exclusion by which of
    `AT_TEST_TEST` and `AT_TEST_TEST2` the Departments picker offers. Global
    setup asserts that shape, so a stack seeded with
    `-TestUnitDepartmentCodes @()` is rejected. Global setup **installs the app
    bundle** into DHIS2 and asserts the seed is present; it does not seed.
+   The validation-report spec also needs `AT_TEST_TEST` to have a validation
+   finding, which the play data's `E2E-TC-FIXTURE` supplies with its open
+   enrolment (neoipcr's rule 43), and the reporting service's
+   `Reporting:Dhis2PublicBaseUrl` to be the origin of `DHIS2_BASE_URL`, since
+   it checks that the patients' Tracker Capture links point there.
 3. **A built bundle** at `build/bundle/NeoIPC-<version>.zip` (`yarn build`).
 
 ## Auth model

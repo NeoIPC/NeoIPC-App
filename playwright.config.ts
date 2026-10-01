@@ -48,11 +48,15 @@ export default defineConfig({
     globalTeardown: './e2e/global-teardown.ts',
     use: {
         baseURL,
-        // Pin the browser locale so report renders are deterministic. The report
-        // form's locale field defaults to blank, so the app sends no ?locale and
-        // NeoIPC-Reporting falls back to Accept-Language — which otherwise follows
-        // the runner's machine locale and can render a different (possibly
-        // incomplete) language than intended. en-GB is a served report locale.
+        // Pin the browser locale so what still follows it is deterministic. Once
+        // the report's language list has loaded, a blank report language makes
+        // the app send the DHIS2 interface language where the report is
+        // available in it, and English otherwise; DHIS2 answers the
+        // interface-language setting from the instance default for a user who
+        // has none, so the browser decides a rendered report's language only
+        // when that list fails to load. It always decides the Partner Report's
+        // JSON download, which sends no language and is negotiated from
+        // Accept-Language. en-GB is a served report locale.
         locale: 'en-GB',
         trace: 'retain-on-failure',
         video: 'retain-on-failure',

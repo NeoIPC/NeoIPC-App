@@ -50,7 +50,7 @@ const optionLabel = (dataset: PublicReferenceDataMetadata): string =>
  * Report's benchmark `referenceDataFile`. Facets — reporting period,
  * country, and cohort — narrow the result select (whose own built-in filter
  * handles name search); the full list is sorted latest-period-first. A
- * metadata card summarises the current selection. `@dhis2/ui` has no tree, so
+ * metadata card summarizes the current selection. `@dhis2/ui` has no tree, so
  * independent facets fit the orthogonal dimensions better than a hierarchy
  * would.
  */

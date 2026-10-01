@@ -1,6 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import type { PartnerReportFormValues } from './PartnerReportForm'
 import type { ReferenceReportFormValues } from './ReferenceReportForm'
+import type { ValidationReportFormValues } from './ValidationReportForm'
 
 /**
  * Client-side precondition errors keyed by a form-field identifier. A key
@@ -110,6 +111,23 @@ export const validateReferenceReport = (
         ) {
             errors.gestationalAge = RANGE_INVERTED()
         }
+    }
+    return errors
+}
+
+export type ValidationFieldKey = 'rules'
+
+/**
+ * Client-side preconditions for the Validation Report: at least one rule
+ * must be selected, since a report applying none would list nothing.
+ * `rules === null` selects every rule.
+ */
+export const validateValidationReport = (
+    values: ValidationReportFormValues
+): FieldErrors<ValidationFieldKey> => {
+    const errors: FieldErrors<ValidationFieldKey> = {}
+    if (values.rules !== null && values.rules.length === 0) {
+        errors.rules = i18n.t('Select at least one validation rule.')
     }
     return errors
 }

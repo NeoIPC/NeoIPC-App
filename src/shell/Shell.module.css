@@ -1,9 +1,15 @@
+/*
+ * The shell fills the area the DHIS2 app shell gives the app: the window
+ * below DHIS2's header bar, an area of definite height that 100% resolves
+ * against. A height taken from the viewport would reach the header bar's
+ * height below the window's lower edge, where the bottom of the content
+ * pane's scrollbar, and with it the end of a long report, cannot be reached.
+ */
 .shell {
     position: relative;
     display: grid;
     grid-template-columns: 256px 1fr;
     height: 100%;
-    min-height: 100vh;
 }
 
 .leftNav {
@@ -34,7 +40,6 @@
     display: grid;
     place-items: center;
     height: 100%;
-    min-height: 100vh;
     padding: var(--spacers-dp24);
 }
 

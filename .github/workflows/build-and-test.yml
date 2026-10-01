@@ -42,7 +42,8 @@ jobs:
           # rejects pull requests whose every real commit is Weblate's.
           head="${{ github.event.pull_request.head.sha }}"
           # i18n/en.pot is deliberately absent: it is this repository's, generated from the source by
-          # `yarn i18n:extract`, and a run that changes a string is expected to commit it.
+          # `yarn build` (a bare `yarn i18n:extract` drops the manifest's strings), and a run that
+          # changes a string is expected to commit it.
           owned='i18n/[^/]*\.po'
           # Weblate commits everything it pushes under this one identity, whoever wrote the translation, so a
           # per-commit committer check recognises Weblate's own output no matter who opened the pull request.

@@ -38,12 +38,12 @@ which takes the empty-listing branch when the stack holds no dataset at all.
 Against a seeded stack, over an admin DHIS2 session (the neoipcr JSON output is
 locale-independent, so any served `Accept-Language` works):
 
-1. **`reference-data.json`** — the neoipcr-serialised reference (benchmark)
+1. **`reference-data.json`** — the neoipcr-serialized reference (benchmark)
    dataset: `GET /neoipc/api/reference-report` with `Accept: application/json`
    (ad-hoc admin mode). The default excludes test units, so it aggregates the
    seeded **non-test** departments into the network benchmark; seed enough of
    them (≥ 5) that the cross-department quartiles are not degenerate.
-2. **`partner-data.json`** — the neoipcr-serialised department dataset the
+2. **`partner-data.json`** — the neoipcr-serialized department dataset the
    Partner Report's data-file mode accepts:
    `GET /neoipc/api/partner-report?unitCodes=AT_TEST_TEST` with
    `Accept: application/json`. `AT_TEST_TEST` is a **non-test** department, so no

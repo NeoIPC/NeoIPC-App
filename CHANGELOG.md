@@ -16,6 +16,47 @@ Unreleased until it is versioned.
   for a field the request always sends, so an untouched form cannot silently render something other
   than the report's own default. Fields the form leaves unset are held to being omitted from the
   request instead.
+- A Validation Report page, for holders of the report authority, with a shortcut in the command
+  palette. It renders the NeoIPC Validation Report as HTML or PDF for the departments picked, every
+  department the user can see when none is. Its "More options" section lists every validation rule
+  with a one-sentence summary of what it checks, read from the report itself in the interface
+  language where it is translated, so a rule the report gains appears without an app release; every
+  rule is applied until the user narrows the selection. "Select all" restores every rule, and "Clear
+  all" unticks them all so a few can be picked. Administrators can also include the test
+  departments. The page needs NeoIPC-Reporting with the `/validation-report` endpoints.
+- A "Data validation summary table" content toggle on the Partner and Reference Report forms, for
+  the table the reports show first after their header. It is on by default and follows the content
+  presets like the other tables; it needs a NeoIPC-Reporting that accepts
+  `includeValidationSummaryTable`.
+
+### Changed
+
+- The Reference Report's department filter labels each department with its hospital, as the Partner
+  Report's picker does, so departments of the same name in different hospitals can be told apart.
+
+### Fixed
+
+- A link to a place in an HTML report shown in the app, such as a cross-reference to a table or to a
+  problem's details, sent the app to its first page and discarded the report, because the app routes
+  on the part of the address such a link changes. It now scrolls to its target and moves the focus
+  there. A web link that leaves the report, such as a patient's Tracker Capture dashboard, opens in a
+  new tab, so the report stays on screen.
+- The page's scrollbar could not be dragged to the end of a long report: the app's pages were as tall
+  as the whole window although they start below the DHIS2 header bar, so the scrollbar's lower end
+  lay below the window's edge. The pages now fill only the area below the header bar.
+- With the report language left blank, the Partner and Reference Reports were rendered in the
+  browser's language, although the form said they would follow the DHIS2 user setting. A blank
+  report language now selects the DHIS2 interface language when the report is available in it, and
+  English otherwise, on these two forms and on the Validation Report's. Generate waits for the list
+  of the report's languages to load; when the list cannot be loaded, the request carries no
+  language, and the reporting service chooses one from the browser's languages. The Partner
+  Report's JSON dataset download, which carries codes rather than text, sends no language, not even
+  one picked in the form, since the reporting service can refuse a language for that download that
+  it accepts for the report.
+- A failure to load a report's content presets hid the language choice on the Partner and Reference
+  Report forms and left their preset picker loading for good, with the content options locked. The
+  presets and the languages now load independently, and without the presets the forms fall back to
+  Custom, with the content options unlocked and a note that the presets could not be loaded.
 
 ## [0.1.0-alpha] - 2026-09-07
 

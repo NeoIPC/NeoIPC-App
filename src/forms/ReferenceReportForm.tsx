@@ -26,6 +26,7 @@ import ReferenceDataSelect from './ReferenceDataSelect'
 import PresetSelect, { CUSTOM_PRESET } from './PresetSelect'
 import { governedKeys, resolvePresetValues } from './applyPreset'
 import { languageLabel } from './languageLabel'
+import { withReportLocale } from './reportLocale'
 import { hasErrors, validateReferenceReport } from './reportValidation'
 import { useReportConfig } from './useReportConfig'
 import {
@@ -63,6 +64,7 @@ export interface ReferenceReportFormValues {
     confidenceIntervals: ConfidenceIntervalMode | ''
     includeIntroductionTexts: boolean
     includeMethodsTexts: boolean
+    includeValidationSummaryTable: boolean
     includeBirthWeightFigure: boolean
     includeGestationalAgeFigure: boolean
     includeIncidenceDensityTable: boolean
@@ -104,6 +106,7 @@ export const defaultValues: ReferenceReportFormValues = {
     confidenceIntervals: '',
     includeIntroductionTexts: true,
     includeMethodsTexts: true,
+    includeValidationSummaryTable: true,
     includeBirthWeightFigure: true,
     includeGestationalAgeFigure: true,
     includeIncidenceDensityTable: true,
@@ -132,7 +135,7 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
     submitting = false,
 }) => {
     const { referenceDataSets } = useAppContext()
-    const { presets, locales } = useReportConfig('reference-report')
+    const { presets, presetsError, locales, localesError } = useReportConfig('reference-report')
     const { isAdmin } = useAuthorities()
     const countryNames = useOrgUnitNames(COUNTRY_GROUP_CODE)
     const [values, setValues] = useState<ReferenceReportFormValues>(
@@ -162,11 +165,18 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
         )
     }, [datasetPreselected, referenceDataSets])
 
-    const presetLocked = preset !== CUSTOM_PRESET
+    // Without its presets the form offers only Custom, so the content
+    // controls unlock at the values they hold.
+    const effectivePreset = presetsError === null ? preset : CUSTOM_PRESET
+    const presetLocked = effectivePreset !== CUSTOM_PRESET
     // Only offer a language picker when the backend advertises more than one
     // render-ready language; today English is the only one, so it stays hidden
     // (mirrors the Partner Report form).
     const hasLanguageChoice = (locales?.length ?? 0) > 1
+    // A blank report language is resolved against the locale list, so
+    // Generate waits for the list; if the list fails to load, a blank
+    // language is left out of the request.
+    const localesPending = locales === null && localesError === null
 
     const setField = <K extends keyof ReferenceReportFormValues>(key: K) =>
         (value: ReferenceReportFormValues[K]) =>
@@ -189,9 +199,10 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
 
     const usingSavedDataset = values.referenceDataId !== ''
     // `TEST_UNITS` holds departments, so this is the one picker the setting
-    // can act on — offering a test department while the data layer drops it
-    // would resolve to an empty org-unit set at render time. Countries are
-    // never members, which is why that picker takes no exclusion.
+    // can act on — a test department picked while the data layer drops it
+    // would fail the render when picked alone and be left out of it when
+    // picked with others. Countries are never members, which is why that
+    // picker takes no exclusion.
     const departmentExcludeGroups = useMemo(
         () => (values.testUnitFilter === false ? [] : [TEST_UNITS_GROUP_CODE]),
         [values.testUnitFilter]
@@ -203,7 +214,7 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
                 event.preventDefault()
                 setSubmitAttempted(true)
                 if (hasErrors(validateReferenceReport(values))) return
-                onSubmit?.(values)
+                onSubmit?.(withReportLocale(values, i18n.language, locales))
             }}
         >
             <Card>
@@ -296,6 +307,7 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
                         label={i18n.t('Departments')}
                         groupCode={DEPARTMENT_GROUP_CODE}
                         excludeGroupCodes={departmentExcludeGroups}
+                        showParentInLabel
                         selectedCodes={values.departmentFilter}
                         onChange={setField('departmentFilter')}
                         disabled={usingSavedDataset}
@@ -392,7 +404,8 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
                 <h3>{i18n.t('Content')}</h3>
                 <PresetSelect
                     presets={presets}
-                    value={preset}
+                    failed={presetsError !== null}
+                    value={effectivePreset}
                     onChange={applyPreset}
                 />
                 <div className={styles.checkboxGrid}>
@@ -455,7 +468,7 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
                         <SingleSelectField
                             label={i18n.t('Report language')}
                             helpText={i18n.t(
-                                'Leave blank to use the locale from your DHIS2 user setting.'
+                                'Leave blank to use your DHIS2 interface language if the report is available in it, and English otherwise.'
                             )}
                             selected={
                                 values.locale === '' ||
@@ -470,7 +483,7 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
                         >
                             <SingleSelectOption
                                 value=""
-                                label={i18n.t('(use DHIS2 user setting)')}
+                                label={i18n.t('(interface language if available, otherwise English)')}
                             />
                             {(locales ?? []).map((loc) => (
                                 <SingleSelectOption
@@ -501,9 +514,11 @@ const ReferenceReportForm: FC<ReferenceReportFormProps> = ({
                 primary
                 type="submit"
                 disabled={
-                    submitting || (!isAdmin && values.referenceDataId === '')
+                    submitting ||
+                    localesPending ||
+                    (!isAdmin && values.referenceDataId === '')
                 }
-                loading={submitting}
+                loading={submitting || localesPending}
             >
                 {i18n.t('Generate')}
             </Button>

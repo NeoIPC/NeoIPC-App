@@ -95,6 +95,12 @@
       "description": "Include report-section methods texts."
     },
     {
+      "name": "includeValidationSummaryTable",
+      "type": "logical",
+      "default": "true",
+      "description": "Include the data-validation summary table."
+    },
+    {
       "name": "includeBirthWeightFigure",
       "type": "logical",
       "default": "true",

@@ -47,6 +47,10 @@ const messageForCode = (code: string): string | null => {
             )
         case 'invalid-parameter-value':
             return i18n.t('One of the values contains characters that are not allowed.')
+        case 'unknown-validation-rule':
+            return i18n.t(
+                'A validation rule you selected is no longer available. Reload the page to see the current rules.'
+            )
         case 'invalid-reference-data':
             return i18n.t('The uploaded file is not a valid reference dataset.')
         case 'unsupported-media-type':

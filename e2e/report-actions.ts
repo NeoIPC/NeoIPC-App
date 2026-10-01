@@ -124,14 +124,21 @@ export async function setDateField(
 }
 
 /**
- * Ensure the Partner Report covers `deptDisplayName` (matched as a substring,
- * since the label is "Hospital — Department" when `showParentInLabel` is set).
+ * Ensure a report form's department picker covers `deptDisplayName` (matched
+ * as a substring, since the label is "Hospital — Department" when
+ * `showParentInLabel` is set). `fieldName` is the picker's `name`, which is also
+ * its `data-test`: `unitCodes` (the default) on the Partner Report,
+ * `departmentFilter` on the Validation Report.
  *
- * A user with exactly one pickable department gets a labelled value instead of
- * a picker — the unit is already selected and there is nothing to choose. Which
- * of the two renders depends on the persona and on "Include test data", so wait
- * for whichever arrives rather than assuming: both appear only after the
- * org-unit rows load, so a point-in-time check races that fetch.
+ * `collapses` says whether the form collapses a single pickable department to
+ * a labelled value. The Partner Report does, because its departments are the
+ * report's subject: a user with exactly one gets that value instead of a
+ * picker, the unit already selected. Which of the two renders there depends on
+ * the persona and on "Include test data", so wait for whichever arrives rather
+ * than assuming: both appear only after the org-unit rows load, so a
+ * point-in-time check races that fetch. The Validation Report's picker is an
+ * optional filter, where empty means every department, so it never collapses
+ * and its caller passes `false`.
  *
  * The collapsed branch still asserts the value names the wanted department. A
  * bare early return would also pass if the picker collapsed onto the *wrong*
@@ -140,10 +147,14 @@ export async function setDateField(
  */
 export async function selectDepartment(
     page: Page,
-    deptDisplayName: string
+    deptDisplayName: string,
+    {
+        fieldName = 'unitCodes',
+        collapses = true,
+    }: { fieldName?: string; collapses?: boolean } = {}
 ): Promise<void> {
-    const collapsed = page.locator('[data-test="unitCodes-single"]')
-    const picker = page.locator('[data-test="unitCodes"]')
+    const collapsed = page.locator(`[data-test="${fieldName}-single"]`)
+    const picker = page.locator(`[data-test="${fieldName}"]`)
 
     // Wait for the collapsed value, and treat its absence as the answer.
     //
@@ -157,16 +168,22 @@ export async function selectDepartment(
     // loading signal either: `loading` only changes the open menu's contents.
     //
     // So wait for the settled state that can be observed. A collapse always
-    // arrives once the rows do; a picker that never collapses costs this wait
-    // once, and is then certainly loaded by the time it is clicked.
-    const isCollapsed = await collapsed
-        .waitFor({ state: 'visible', timeout: 15000 })
-        .then(() => true)
-        .catch(() => false)
+    // arrives once the rows do; a picker that does not collapse this time costs
+    // this wait once, and is then certainly loaded by the time it is clicked.
+    //
+    // A picker that can never collapse is never swapped out, so there is no
+    // race to settle: it is clicked at once, and the option click below waits
+    // while the open menu shows its own loading state.
+    if (collapses) {
+        const isCollapsed = await collapsed
+            .waitFor({ state: 'visible', timeout: 15000 })
+            .then(() => true)
+            .catch(() => false)
 
-    if (isCollapsed) {
-        await expect(collapsed).toContainText(deptDisplayName)
-        return
+        if (isCollapsed) {
+            await expect(collapsed).toContainText(deptDisplayName)
+            return
+        }
     }
 
     await picker.click()

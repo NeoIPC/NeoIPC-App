@@ -1,5 +1,5 @@
 /*
- * Shared grid layout for the report forms (Partner + Reference). Width is not
+ * Shared grid layout for the report forms (Partner, Reference, Validation). Width is not
  * capped here: a form fills the shared centred content column
  * (ContentArea.module.css `.page`) so it lines up with the rendered report
  * below it. Only the multi-column field groups are constrained, so single
@@ -46,11 +46,41 @@
     color: var(--colors-grey900);
 }
 
-/* Flow the many boolean content toggles into as many columns as fit. */
+/* Flow a long run of checkboxes (content toggles, validation rules) into as
+   many columns as fit. */
 .checkboxGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: var(--spacers-dp8) var(--spacers-dp24);
+}
+
+/*
+ * A checkbox whose label runs to several lines: a short name, then what it
+ * stands for in smaller type. @dhis2/ui centres the icon on the whole label,
+ * which for a multi-line label puts it beside no line in particular, so the
+ * icon is aligned to the top instead. The selector is more specific than
+ * @dhis2/ui's own scoped `label` rule, so it wins whichever stylesheet loads
+ * last.
+ */
+.checkboxGrid .ruleField label {
+    align-items: flex-start;
+}
+
+.ruleLabel {
+    display: block;
+    /* The icon box is 24px tall (an 18px glyph inside 1px of padding and a 2px
+       border) against a 19px line, so this centres the first line on the icon,
+       as @dhis2/ui's centring does for a one-line label. */
+    padding-top: 2.5px;
+}
+
+/* Typography follows @dhis2/ui's field help text, which this replaces. */
+.ruleSummary {
+    display: block;
+    margin-top: var(--spacers-dp4);
+    font-size: 12px;
+    line-height: 14px;
+    color: var(--colors-grey700);
 }
 
 @media (max-width: 640px) {

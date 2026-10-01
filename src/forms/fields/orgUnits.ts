@@ -167,9 +167,10 @@ export const desiredSelection = (
 /**
  * True when `rows` has coded units but every one is removed by
  * `excludeGroupCodes` — i.e. the picker is empty *because of the exclusion*,
- * not because the scope is empty. Drives the Partner form's "all your
- * departments are excluded test units" notice, so a non-admin scoped only to
- * test units gets an explanation instead of a silent empty picker.
+ * not because the scope is empty. Drives the Partner and Validation forms'
+ * "all your departments are excluded test units" notice, so a non-admin
+ * scoped only to test units gets an explanation instead of a silent empty
+ * picker.
  */
 export const allCodedUnitsExcluded = (
     rows: OrgUnitRow[],

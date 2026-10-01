@@ -95,6 +95,12 @@
       "description": "Include outlier-interpretation prose alongside outlier callouts."
     },
     {
+      "name": "includeValidationSummaryTable",
+      "type": "logical",
+      "default": "true",
+      "description": "Include the data-validation summary table."
+    },
+    {
       "name": "includeBirthWeightFigure",
       "type": "logical",
       "default": "true",

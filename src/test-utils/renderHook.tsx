@@ -9,6 +9,12 @@ import { createRoot } from 'react-dom/client'
 export interface RenderHookHandle<T> {
     /** Latest value returned by the hook; refreshed on every render. */
     result: { current: T }
+    /**
+     * Render the harness again, as a parent's re-render would, so the hook
+     * re-reads what it takes from outside React (a changed mock, a changed
+     * `i18n.language`).
+     */
+    rerender: () => void
     /** Unmount the harness and detach its container. */
     unmount: () => void
 }
@@ -34,6 +40,11 @@ export const renderHook = <T,>(useHook: () => T): RenderHookHandle<T> => {
     })
     return {
         result,
+        rerender: () => {
+            act(() => {
+                root.render(<Harness />)
+            })
+        },
         unmount: () => {
             act(() => root.unmount())
             container.remove()
