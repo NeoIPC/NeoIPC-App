@@ -36,10 +36,11 @@ const FRAGMENT = `
 /**
  * The app's routing reduced to what the report depends on: the page that
  * shows it, and the catch-all redirect to the first page that a fragment the
- * router cannot place leads to.
+ * router cannot place leads to. The router takes the app's own future flags,
+ * so it updates and resolves routes as the app's does.
  */
 const App = () => (
-    <HashRouter>
+    <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
             <Route path="/reports/validation" element={<InlineHtmlReport fragmentHtml={FRAGMENT} />} />
             <Route path="/reports/partner" element={<p id="first-page">First page</p>} />

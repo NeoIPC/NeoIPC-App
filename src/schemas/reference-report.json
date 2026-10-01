@@ -164,7 +164,7 @@
       "name": "includeAntibioticUtilisationTable",
       "type": "logical",
       "default": "false",
-      "description": "Include the antibiotic-utilisation table."
+      "description": "Include the antibiotic-utilization table."
     },
     {
       "name": "includeSurgicalProcedureRateTable",
