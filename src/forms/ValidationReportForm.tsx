@@ -75,10 +75,6 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
     // Client-side preconditions are only surfaced after the first Generate
     // attempt, then re-evaluated live as the user fixes each field.
     const [submitAttempted, setSubmitAttempted] = useState(false)
-    const errors = useMemo(
-        () => (submitAttempted ? validateValidationReport(values) : {}),
-        [submitAttempted, values]
-    )
 
     const hasLanguageChoice = (locales?.length ?? 0) > 1
     // A blank report language is resolved against the locale list, so
@@ -90,6 +86,17 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
     // that failed to load: the request leaves `rules` out and the report
     // applies its own full set.
     const catalogueUnavailable = catalogueError !== null || catalogue?.length === 0
+    // A selection made against an earlier catalogue, before a refetch for
+    // another interface language failed, stands for nothing the form still
+    // shows, so it is neither validated nor sent.
+    const effectiveValues = useMemo(
+        () => (catalogueUnavailable ? { ...values, rules: null } : values),
+        [catalogueUnavailable, values]
+    )
+    const errors = useMemo(
+        () => (submitAttempted ? validateValidationReport(effectiveValues) : {}),
+        [submitAttempted, effectiveValues]
+    )
 
     const setField = <K extends keyof ValidationReportFormValues>(key: K) =>
         (value: ValidationReportFormValues[K]) =>
@@ -125,8 +132,8 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
             onSubmit={(event) => {
                 event.preventDefault()
                 setSubmitAttempted(true)
-                if (hasErrors(validateValidationReport(values))) return
-                onSubmit?.(withReportLocale(values, i18n.language, locales))
+                if (hasErrors(validateValidationReport(effectiveValues))) return
+                onSubmit?.(withReportLocale(effectiveValues, i18n.language, locales))
             }}
         >
             <Card>

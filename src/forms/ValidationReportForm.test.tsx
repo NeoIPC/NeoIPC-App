@@ -127,6 +127,30 @@ describe('ValidationReportForm', () => {
         expect(host.textContent).toContain('Select at least one validation rule.')
     })
 
+    // The catalogue is fetched again when the interface language changes, and
+    // that request can fail after the user has narrowed the selection.
+    it.each([
+        ['narrowed', (): void => click(ruleBox(2))],
+        ['cleared', clearAll],
+    ])(
+        'sends no rules once the catalogue is unavailable, the earlier selection %s',
+        (_state, change) => {
+            renderForm()
+            openMoreOptions()
+            change()
+
+            mockedUseValidationRules.mockReturnValue({
+                rules: null,
+                error: new Error('502 Bad Gateway'),
+            })
+            act(() => root.render(<ValidationReportForm onSubmit={onSubmit} />))
+            submit()
+
+            expect(onSubmit).toHaveBeenCalledTimes(1)
+            expect(onSubmit.mock.calls[0][0].rules).toBeNull()
+        }
+    )
+
     it('offers "Include test data" to administrators only', () => {
         renderForm({ isAdmin: false })
         openMoreOptions()
