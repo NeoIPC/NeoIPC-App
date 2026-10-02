@@ -19,10 +19,9 @@ concurrency:
 jobs:
   catalogue-ownership:
     # This repository owns i18n/en.pot; Weblate owns every i18n/<lang>.po and is their only writer. Two
-    # writers on one catalogue is what conflicts every language at once — both sides rewrite adjacent header
-    # lines inside a single hunk git cannot auto-merge — and here the prose rule stood alone: the guardrail
-    # said "do not hand-edit a catalogue" while nothing could catch it, so a pull request doing exactly that
-    # would simply have collided with Weblate's next write. This enforces it.
+    # writers on one catalogue conflict in every language at once, since both sides rewrite adjacent header
+    # lines inside a single hunk git cannot auto-merge, so this job rejects a pull request that changes a
+    # .po file through any commit Weblate did not make.
     name: Catalogue ownership
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -46,11 +45,10 @@ jobs:
           # changes a string is expected to commit it.
           owned='i18n/[^/]*\.po'
           # Weblate commits everything it pushes under this one identity, whoever wrote the translation, so a
-          # per-commit committer check recognises Weblate's own output no matter who opened the pull request.
-          # Verified against this repository's own first drain rather than assumed. Exempting by pull-request
-          # author instead would reject the drain pull requests we open ourselves from weblate-app, whose
-          # commits are Weblate's throughout — and would wave through a stray hand-written commit riding along
-          # in a Weblate-authored one.
+          # per-commit committer check recognizes Weblate's own output no matter who opened the pull request.
+          # Exempting by pull-request author instead would reject the drain pull requests we open ourselves
+          # from weblate-app, whose commits are Weblate's throughout, and would wave through a stray
+          # hand-written commit riding along in a Weblate-authored one.
           #
           # Do not try to confirm this identity by reading `main`: the drains are squash-merged, which rewrites
           # each commit and makes the merger the committer, so every commit on `main` shows GitHub's identity
@@ -61,22 +59,22 @@ jobs:
           # --no-renames matters: with rename detection on, git prints only a rename's DESTINATION, so
           # `git mv i18n/de.po elsewhere.po` plus a hand edit shows a path that cannot match the pattern and
           # the file escapes the gate entirely. Splitting renames into delete+add surfaces the owned source
-          # path. Assigned separately from the grep so that a git failure cannot be swallowed by the `|| true`
-          # and read as "nothing offending".
+          # path. Assigned separately from the grep because, piped into it, a git failure leaves grep with no
+          # input, and under `pipefail` grep's exit 1 is then the pipeline's status, which the filter below
+          # reads as "nothing offending".
           if ! changed=$(git diff --name-only --no-renames "$base...$head"); then
             echo "::error::Could not diff $base...$head — the gate cannot vouch for this pull request."
             exit 1
           fi
 
           offending=""
-          # `|| true` would ignore EVERY non-zero status; the contract this gate wants is narrower and is
-          # stated in the loop below — grep's exit 1 means "no matches", which is how it says the input is
-          # clean, and anything ABOVE 1 is grep itself failing. Collapsing the two lets a filter that could
-          # not run read as "nothing owned was changed": measured under Actions' `bash -eo pipefail`, an
-          # unrunnable pattern took the old form to "PASSED, exit 0" on a changed catalogue it should have
-          # rejected. Not reachable while `$owned` is a literal that compiles — but "correct because today's
-          # pattern happens to compile" is a property of the input rather than of this gate, which is the
-          # same reasoning that closed the rename and word-splitting escapes above.
+          # grep's exit 1 means "no matches", which is how it says the input is clean, and anything ABOVE 1 is
+          # grep itself failing. `|| true` would ignore both, so a filter that could not run would read as
+          # "nothing owned was changed": with it, an unrunnable pattern leaves `$matched` empty and the job
+          # passes a changed catalogue it should reject. Not reachable while `$owned` is a literal that
+          # compiles, but "correct because today's pattern happens to compile" is a property of the input
+          # rather than of this gate, the same reasoning that governs the rename handling above and the
+          # word-splitting handling below.
           #
           # `|| rc=$?` rather than a bare assignment: under `set -e` a failing command substitution ends the
           # step before the status can be inspected at all.
@@ -101,9 +99,9 @@ jobs:
             # A here-string always emits at least one line, so an empty match list arrives here as a single
             # empty string rather than as no iterations at all.
             [ -n "$f" ] || continue
-            # The git call is separated from the grep deliberately. With `|| true` spanning the whole
-            # pipeline, a git failure — a missing ref, an unreadable path — produced an empty string, which
-            # this loop reads as "no non-Weblate committers" and the gate then PASSES. A guard whose error
+            # The git call is separated from the grep deliberately. With `|| true` spanning one pipeline of
+            # both, a git failure (a missing ref, an unreadable path) would produce an empty string, which
+            # this loop reads as "no non-Weblate committers", and the gate would PASS. A guard whose error
             # path is indistinguishable from its success path fails open, which is the one direction it must
             # never fail. Only the grep's own "no matches" status is ignored, because that is its way of
             # saying the file is clean.
@@ -128,13 +126,13 @@ jobs:
           done <<< "$matched"
           if [ -n "$offending" ]; then
             echo "::error::This pull request modifies Weblate-owned catalogues. Weblate is their only writer."
-            # `|| continue`, not `[ -n "$f" ] && echo`: `$offending` ends in a newline and `echo` adds
-            # another, so the last iteration reads "" and the `&&` short-circuits to status 1. That becomes
-            # the loop's exit status, and under Actions' `bash --noprofile --norc -eo pipefail` it ends the
-            # step right here — discarding every guidance line below, which is the whole point of the failure
-            # path. The gate still rejects correctly; the person who tripped it just loses everything written
-            # to help them fix it. The checking loop above already uses `|| continue` for this reason, and a
-            # here-string rather than a pipe keeps the two loops the same shape.
+            # `|| continue`, not `[ -n "$f" ] && echo`: `$offending` ends in a newline and the here-string
+            # adds another, so the last iteration reads "" and the `&&` form leaves the loop at status 1. Fed
+            # by a here-string, that status does not end the step, since it comes from inside an `&&` list,
+            # where `set -e` is ignored; fed by a pipe, it fails the pipeline, and under Actions'
+            # `bash --noprofile --norc -eo pipefail` the step ends right here, discarding every guidance line
+            # below while the gate still rejects. `|| continue` leaves status 0 however the loop is fed, and
+            # the checking loop above takes the same form and the same here-string.
             while IFS= read -r f; do
               [ -n "$f" ] || continue
               echo "::error file=$f::$f is owned by Weblate — make the change there, not here."

@@ -1,8 +1,9 @@
 import path from 'node:path'
 
 /**
- * Password set on every synthetic play user by the seed
- * (`Initialize-TestDhis2.ps1 -PlayUserPassword`, default `NeoIPC-Play1`).
+ * Password set on every synthetic play user by the seed (the NeoIPC
+ * workspace's `Initialize-TestDhis2.ps1 -PlayUserPassword`, default
+ * `NeoIPC-Play1`).
  * Override with `PLAY_USER_PASSWORD` to match a non-default seed.
  */
 export const PLAY_USER_PASSWORD = process.env.PLAY_USER_PASSWORD ?? 'NeoIPC-Play1'

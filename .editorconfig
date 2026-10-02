@@ -23,8 +23,9 @@ trim_trailing_whitespace = true
 trim_trailing_whitespace = false
 
 # gettext catalogues are machine-written: never add or trim whitespace here. LF and UTF-8 still apply,
-# as everywhere — a catalogue's own header declares charset=UTF-8, and carving it out of the line-ending
-# contract is what produced mixed-CRLF corruption before. Only the two whitespace properties are off.
+# as everywhere: a catalogue's own header declares charset=UTF-8, and a catalogue outside the line-ending
+# contract takes whatever line endings the tool that rewrites it prefers, so a partial rewrite leaves
+# mixed line endings, invisible in editors and most diffs. Only the two whitespace properties are off.
 [*.{po,pot}]
 insert_final_newline = false
 trim_trailing_whitespace = false

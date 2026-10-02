@@ -82,11 +82,13 @@ Environment (all have defaults for the local stack):
 | `DHIS2_BASE_URL` | `http://localhost:8080` | Stack origin. |
 | `DHIS2_ADMIN_USER` / `DHIS2_ADMIN_PASS` | `admin` / `district` | Installs the app + uploads the reference fixture. |
 | `PLAY_USER_PASSWORD` | `NeoIPC-Play1` | Password on the seeded play users. |
+| `E2E_ALLOW_NONLOCAL` | unset | `true` lets the suite run against a non-local `DHIS2_BASE_URL`, which it otherwise refuses, since it mutates state with the synthetic default credentials. |
 
 The three engines run **serially** (`workers: 1`): every engine shares one DHIS2
 substrate and the singleton validation-exceptions resource, so admin CRUD is the
-binding constraint. Render assertions allow up to ~12 min (the Quarto/R backend
-render can take ~10 min).
+binding constraint. Each test, its render included, must finish within the
+90-second test timeout `playwright.config.ts` sets; the render helpers' own
+12-minute ceiling (`RENDER_TIMEOUT` in `report-actions.ts`) does not extend it.
 
 ## Fixtures
 
@@ -94,14 +96,21 @@ See [`fixtures/README.md`](fixtures/README.md). Both report-dataset fixtures (`r
 `partner-data.json`) are real captures from a seeded stack; reset either to the `__placeholder__`
 sentinel and its dependent specs skip.
 
-## First-run notes
+## Driving the report forms
 
-These are the points most likely to need a small adjustment on the first live
-run:
+The helpers in `report-actions.ts` drive the forms as a user does:
 
-- `@dhis2/ui` radio/multiselect gestures — `setDataSource`/`setOutputFormat`
-  use `input.check()`; the department and dataset dropdown open/click may need
-  tuning against the running widgets.
-- The Partner Report reporting period uses a wide range set via `setDateField`
-  (fill + blur, since `CalendarInput` commits to form state on blur); the range
-  may want narrowing once the seeded demo-data date range is known.
+- The data-source and output-format radios are native inputs, which
+  `setDataSource` and `setOutputFormat` select with `check()`.
+- The department picker and the reference-dataset select are `@dhis2/ui`
+  widgets that change after the form first renders: the Partner Report's
+  picker collapses to a single value for a user with one department, which it
+  decides only once the org units load, and the dataset select preselects the
+  first saved dataset asynchronously. `selectDepartment` and
+  `selectReferenceDataset` wait for the settled state, and their doc comments
+  say which widget behaviour each step answers.
+- The Partner Report specs request the period 2020-01-01 to 2030-12-31, which
+  contains every seeded event, so they do not depend on the seed's exact
+  dates. Each date goes through `setDateField` (fill, then blur, since
+  `CalendarInput` commits to form state only on blur), and the online-render
+  specs assert that the render request carries the period.

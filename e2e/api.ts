@@ -89,8 +89,8 @@ const ensureOk = async (
 
 /**
  * Install the built app bundle into DHIS2 (`POST /api/apps`, multipart field
- * `file`), then assert it is served. Reuses the bundle the runner built — this
- * does not re-run `yarn build`.
+ * `file`), then assert it is served. It installs the bundle `yarn build` last
+ * wrote and does not build one.
  */
 export async function installApp(
     ctx: APIRequestContext,
@@ -98,7 +98,7 @@ export async function installApp(
 ): Promise<void> {
     if (!fs.existsSync(bundlePath)) {
         throw new Error(
-            `app bundle not found: ${bundlePath} — run 'yarn build' (or Invoke-PlaywrightTests.ps1 without -SkipAppBuild)`
+            `app bundle not found: ${bundlePath} — run 'yarn build' first`
         )
     }
     const res = await ctx.post('/api/apps', {
@@ -117,7 +117,8 @@ export async function installApp(
 
 /**
  * Fail fast if the play seed is absent — the suite asserts the seed exists but
- * does not create it (seeding stays in `Initialize-TestDhis2.ps1`).
+ * does not create it. `e2e/README.md` lists what the seed must hold; the NeoIPC
+ * workspace's seeder, `scripts/Initialize-TestDhis2.ps1`, provides it.
  */
 export async function assertSeeded(ctx: APIRequestContext): Promise<void> {
     // AT_TEST_TEST2 is as required as the other two: the reference-report
@@ -173,7 +174,7 @@ export async function assertSeeded(ctx: APIRequestContext): Promise<void> {
         const unit = body.organisationUnits?.[0]
         if (!unit) {
             throw new Error(
-                `seed missing: no org unit with code ${code}. Seed the stack with Initialize-TestDhis2.ps1 first.`
+                `seed missing: no org unit with code ${code}. Seed the stack first: e2e/README.md lists what the suite needs, and the NeoIPC workspace's Initialize-TestDhis2.ps1 provides it.`
             )
         }
         const isTestUnit = (unit.organisationUnitGroups ?? []).some(
@@ -181,7 +182,7 @@ export async function assertSeeded(ctx: APIRequestContext): Promise<void> {
         )
         if (isTestUnit !== shouldBeTestUnit) {
             throw new Error(
-                `seed shape wrong: ${code} is ${isTestUnit ? '' : 'not '}in the ${TEST_UNITS_GROUP_CODE} group, but it must be ${shouldBeTestUnit ? 'in' : 'out of'} that group: ${because}. Re-seed with Initialize-TestDhis2.ps1 (its -TestUnitDepartmentCodes controls this).`
+                `seed shape wrong: ${code} is ${isTestUnit ? '' : 'not '}in the ${TEST_UNITS_GROUP_CODE} group, but it must be ${shouldBeTestUnit ? 'in' : 'out of'} that group: ${because}. Re-seed with the NeoIPC workspace's Initialize-TestDhis2.ps1 (its -TestUnitDepartmentCodes controls this).`
             )
         }
     }
