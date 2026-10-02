@@ -82,6 +82,7 @@ Environment (all have defaults for the local stack):
 | `DHIS2_BASE_URL` | `http://localhost:8080` | Stack origin. |
 | `DHIS2_ADMIN_USER` / `DHIS2_ADMIN_PASS` | `admin` / `district` | Installs the app + uploads the reference fixture. |
 | `PLAY_USER_PASSWORD` | `NeoIPC-Play1` | Password on the seeded play users. |
+| `E2E_ALLOW_NONLOCAL` | unset | `true` lets the suite run against a non-local `DHIS2_BASE_URL`, which it otherwise refuses, since it mutates state with the synthetic default credentials. |
 
 The three engines run **serially** (`workers: 1`): every engine shares one DHIS2
 substrate and the singleton validation-exceptions resource, so admin CRUD is the
