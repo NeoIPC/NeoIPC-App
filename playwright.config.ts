@@ -15,7 +15,7 @@ const baseURL = process.env.DHIS2_BASE_URL ?? 'http://localhost:8080'
  * independent engine cores (Blink / Gecko / WebKit). Adding or removing an
  * engine is a one-token edit here; the `projects` below are derived from
  * this list, so there are no copy-pasted per-engine blocks. Pick one with
- * `--project=<name>` (surfaced as `Invoke-PlaywrightTests.ps1 -Project`).
+ * `npx playwright test --project=<name>`, as `e2e/README.md` shows.
  *
  * Residual gap: Playwright's `webkit` is the WebKit engine core run
  * cross-platform, not shipping Safari.
