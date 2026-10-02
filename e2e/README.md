@@ -94,14 +94,21 @@ See [`fixtures/README.md`](fixtures/README.md). Both report-dataset fixtures (`r
 `partner-data.json`) are real captures from a seeded stack; reset either to the `__placeholder__`
 sentinel and its dependent specs skip.
 
-## First-run notes
+## Driving the report forms
 
-These are the points most likely to need a small adjustment on the first live
-run:
+The helpers in `report-actions.ts` drive the forms as a user does:
 
-- `@dhis2/ui` radio/multiselect gestures — `setDataSource`/`setOutputFormat`
-  use `input.check()`; the department and dataset dropdown open/click may need
-  tuning against the running widgets.
-- The Partner Report reporting period uses a wide range set via `setDateField`
-  (fill + blur, since `CalendarInput` commits to form state on blur); the range
-  may want narrowing once the seeded demo-data date range is known.
+- The data-source and output-format radios are native inputs, which
+  `setDataSource` and `setOutputFormat` select with `check()`.
+- The department picker and the reference-dataset select are `@dhis2/ui`
+  widgets that change after the form first renders: the Partner Report's
+  picker collapses to a single value for a user with one department, which it
+  decides only once the org units load, and the dataset select preselects the
+  first saved dataset asynchronously. `selectDepartment` and
+  `selectReferenceDataset` wait for the settled state, and their doc comments
+  say which widget behaviour each step answers.
+- The Partner Report specs request the period 2020-01-01 to 2030-12-31, which
+  contains every seeded event, so they do not depend on the seed's exact
+  dates. Each date goes through `setDateField` (fill, then blur, since
+  `CalendarInput` commits to form state only on blur), and the online-render
+  specs assert that the render request carries the period.
