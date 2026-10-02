@@ -15,12 +15,16 @@
  *     vendored snapshots. Catches the case where the snapshot is
  *     stale because the backend's [ApiParameter] surface moved.
  *
- * The script is intentionally dependency-free: it parses each
- * contract's `[ ... ] as const` tuple with a narrow regex rather than
- * spinning up a TypeScript compiler. The wire-fields files are
- * 1-tuple-per-export and the tuple format is enforced by repository
- * convention; if a future one grows beyond that shape, switch to
- * importing via tsx instead.
+ * The script imports nothing beyond Node's standard library and reads
+ * each tuple with a narrow regex rather than loading the TypeScript
+ * compiler, so it supports one shape: `export const <name> = [ ... ]
+ * as const`, without a type annotation, whose entries are quoted string
+ * literals. A declaration the regex does not find, such as one with a
+ * type annotation or without `as const`, fails the check. An entry that
+ * is not a string literal (a spread, a template literal, a reference to
+ * a constant) is not read, so the check compares the schema against the
+ * tuple without it, and a quoted string in a comment inside the tuple is
+ * read as a field.
  */
 
 import { readFileSync, mkdtempSync, rmSync } from 'node:fs'
