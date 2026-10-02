@@ -85,8 +85,9 @@ Environment (all have defaults for the local stack):
 
 The three engines run **serially** (`workers: 1`): every engine shares one DHIS2
 substrate and the singleton validation-exceptions resource, so admin CRUD is the
-binding constraint. Render assertions allow up to ~12 min (the Quarto/R backend
-render can take ~10 min).
+binding constraint. Each test, its render included, must finish within the
+90-second test timeout `playwright.config.ts` sets; the render helpers' own
+12-minute ceiling (`RENDER_TIMEOUT` in `report-actions.ts`) does not extend it.
 
 ## Fixtures
 
