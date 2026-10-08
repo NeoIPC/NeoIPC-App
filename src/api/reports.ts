@@ -159,7 +159,10 @@ export const buildPartnerReportQuery = (
  * Build the `URLSearchParams` for `GET /validation-report`. Empty form
  * values are dropped. `rules` is sent as repeated keys only for an explicit
  * selection: `null` selects every rule, which the report applies when the
- * parameter is absent, so the default request stays short.
+ * parameter is absent, so the default request stays short. The two
+ * validation-exception switches are always sent; the reporting service
+ * judges them by value, refusing the non-default one from a caller who is no
+ * administrator, so the defaults a non-administrator's form keeps pass.
  */
 export const buildValidationReportQuery = (
     values: ValidationReportFormValues,
@@ -172,6 +175,12 @@ export const buildValidationReportQuery = (
         appendArray(qs, 'rules', values.rules.map(String))
     }
     appendBool(qs, 'includeTestData', values.includeTestData)
+    appendBool(qs, 'applyValidationExceptions', values.applyValidationExceptions)
+    appendBool(
+        qs,
+        'includeUnusedValidationExceptions',
+        values.includeUnusedValidationExceptions
+    )
     if (format === 'html') qs.append('fragmentMode', 'true')
     return qs
 }

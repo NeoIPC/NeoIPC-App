@@ -10,6 +10,29 @@ Unreleased until it is versioned.
 
 ## [Unreleased]
 
+### Added
+
+- Two administrator checkboxes on the Validation Report form, beside "Include test data": one renders
+  the report without the stored validation-exception list, the other adds an appendix listing the
+  list's records for the departments in scope that match no record or exempt nothing. They need
+  NeoIPC-Reporting 0.5.0 or later, which refuses both from anyone else.
+- The Validation Report form shows administrators the address the report's patient links point to, as
+  the reporting service read it when it started, so a changed setting the service has not taken up
+  shows.
+- A message asking for a reload when the reporting service finds no DHIS2 session on a request.
+
+### Changed
+
+- A validation-exception list the reporting service refuses on upload reports the reason, one line per
+  point, and the file picker offers CSV files, the only kind the service accepts. The display name's
+  help says it is a label for administrators, where it said partners pick the file by its id.
+
+### Fixed
+
+- The organisation unit picker shows why it could not load the organisation units as the error words
+  it, where i18next's HTML escaping showed slashes and quotation marks as entities and a placeholder
+  in the message was read as one.
+
 ## [0.2.0-alpha] - 2026-10-01
 
 ### Added

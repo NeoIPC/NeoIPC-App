@@ -21,6 +21,7 @@ import { languageLabel } from './languageLabel'
 import { withReportLocale } from './reportLocale'
 import { hasErrors, validateValidationReport } from './reportValidation'
 import { toggleRuleSelection } from './ruleSelection'
+import { Dhis2PublicBaseUrlState, useDhis2PublicBaseUrl } from './useDhis2PublicBaseUrl'
 import { useReportConfig } from './useReportConfig'
 import { useValidationRules } from './useValidationRules'
 import styles from './formLayout.module.css'
@@ -37,6 +38,11 @@ export interface ValidationReportFormValues {
      *  by leaving the parameter out. */
     rules: number[] | null
     includeTestData: boolean
+    /** Apply the stored validation-exception list; administrators only. */
+    applyValidationExceptions: boolean
+    /** Add the appendix of the list's records that exempt nothing;
+     *  administrators only. */
+    includeUnusedValidationExceptions: boolean
     locale: string
     outputFormat: 'html' | 'pdf'
 }
@@ -50,6 +56,8 @@ export const defaultValues: ValidationReportFormValues = {
     departmentFilter: [],
     rules: null,
     includeTestData: false,
+    applyValidationExceptions: true,
+    includeUnusedValidationExceptions: false,
     locale: '',
     outputFormat: 'html',
 }
@@ -69,6 +77,7 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
     })
     const { rules: catalogue, error: catalogueError } = useValidationRules()
     const { isAdmin } = useAuthorities()
+    const publicBaseUrl = useDhis2PublicBaseUrl(isAdmin)
     const rulesErrorId = useId()
     const [values, setValues] = useState<ValidationReportFormValues>(defaultValues)
     const [deptRows, setDeptRows] = useState<OrgUnitRow[]>([])
@@ -255,12 +264,31 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
                 </fieldset>
 
                 {isAdmin && (
-                    <CheckboxField
-                        name="includeTestData"
-                        label={i18n.t('Include test data')}
-                        checked={values.includeTestData}
-                        onChange={({ checked }) => setField('includeTestData')(checked)}
-                    />
+                    <>
+                        <CheckboxField
+                            name="includeTestData"
+                            label={i18n.t('Include test data')}
+                            checked={values.includeTestData}
+                            onChange={({ checked }) => setField('includeTestData')(checked)}
+                        />
+                        <CheckboxField
+                            name="applyValidationExceptions"
+                            label={i18n.t('Apply the validation exceptions')}
+                            checked={values.applyValidationExceptions}
+                            onChange={({ checked }) =>
+                                setField('applyValidationExceptions')(checked)
+                            }
+                        />
+                        <CheckboxField
+                            name="includeUnusedValidationExceptions"
+                            label={i18n.t('Add an appendix of unused validation exceptions')}
+                            checked={values.includeUnusedValidationExceptions}
+                            onChange={({ checked }) =>
+                                setField('includeUnusedValidationExceptions')(checked)
+                            }
+                        />
+                        <Dhis2PublicBaseUrlNote state={publicBaseUrl} />
+                    </>
                 )}
 
                 {hasLanguageChoice && (
@@ -315,6 +343,42 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
                 {i18n.t('Generate')}
             </Button>
         </form>
+    )
+}
+
+/**
+ * The address the report's patient links point to, as the reporting service
+ * read it when it started, so an administrator can check it after the
+ * setting changed: a running service keeps the address its container was
+ * created with. The address is set as a value, not as markup, so i18next's
+ * HTML escaping, which would show its slashes as entities, is switched off.
+ * i18next reads an interpolated value again: the service sends the address
+ * with its braces percent-encoded, so it holds no placeholder, and nesting
+ * is switched off for the `$t(…)` a path may hold.
+ */
+const Dhis2PublicBaseUrlNote: FC<{ state: Dhis2PublicBaseUrlState }> = ({ state }) => {
+    if (state.error) {
+        return (
+            <Help warning>
+                {i18n.t('The address the patient links point to could not be loaded.')}
+            </Help>
+        )
+    }
+    if (!state.address) return null
+    const options = {
+        address: state.address.publicBaseUrl,
+        interpolation: { escapeValue: false },
+        nest: false,
+    }
+    return (
+        <p>
+            {state.address.configured
+                ? i18n.t('Patient links in the report point to {{address}}.', options)
+                : i18n.t(
+                      'Patient links in the report point to {{address}}, the DHIS2 address the reporting service reads from, because no public DHIS2 address is configured.',
+                      options
+                  )}
+        </p>
     )
 }
 

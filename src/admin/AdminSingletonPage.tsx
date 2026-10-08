@@ -141,7 +141,10 @@ function AdminSingletonPage<T extends AdminResourceMetadata>({
                 <h2>{item ? i18n.t('Replace') : i18n.t('Upload')}</h2>
                 {actionError && (
                     <NoticeBox error title={i18n.t('Action failed')}>
-                        {actionError.message}
+                        {/* A refused validation-exception list's reason is
+                            the service's check's message, one line per point
+                            it makes. */}
+                        <span style={{ whiteSpace: 'pre-line' }}>{actionError.message}</span>
                     </NoticeBox>
                 )}
                 <form onSubmit={onUpload}>

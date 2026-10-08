@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-10-01T04:29:28.731Z\n"
-"PO-Revision-Date: 2026-10-01T04:29:28.732Z\n"
+"POT-Creation-Date: 2026-10-08T18:05:07.236Z\n"
+"PO-Revision-Date: 2026-10-08T18:05:07.236Z\n"
 
 msgid "Upload"
 msgstr "Upload"
@@ -100,11 +100,20 @@ msgid "Validation exception files"
 msgstr "Validation exception files"
 
 msgid ""
-"Operator-facing label. Partners reference this file by ID when generating a "
-"report."
+"A label for administrators. The reports apply the stored list without "
+"showing its name."
 msgstr ""
-"Operator-facing label. Partners reference this file by ID when generating a "
-"report."
+"A label for administrators. The reports apply the stored list without "
+"showing its name."
+
+msgid "The validation exception list was not stored —"
+msgstr "The validation exception list was not stored —"
+
+msgid "The validation exception list was not stored, because it is not valid."
+msgstr "The validation exception list was not stored, because it is not valid."
+
+msgid "Your DHIS2 session has ended. Reload the page to sign in again."
+msgstr "Your DHIS2 session has ended. Reload the page to sign in again."
 
 msgid "Select at least one department."
 msgstr "Select at least one department."
@@ -238,8 +247,8 @@ msgstr "From"
 msgid "To"
 msgstr "To"
 
-msgid "Failed to load organisation units — {{message}}"
-msgstr "Failed to load organisation units — {{message}}"
+msgid "Failed to load organisation units —"
+msgstr "Failed to load organisation units —"
 
 msgid ""
 "These org units cannot be picked because they have no `code` set in DHIS2 "
@@ -559,6 +568,25 @@ msgstr "Clear all"
 
 msgid "Rule {{id}}"
 msgstr "Rule {{id}}"
+
+msgid "Apply the validation exceptions"
+msgstr "Apply the validation exceptions"
+
+msgid "Add an appendix of unused validation exceptions"
+msgstr "Add an appendix of unused validation exceptions"
+
+msgid "The address the patient links point to could not be loaded."
+msgstr "The address the patient links point to could not be loaded."
+
+msgid "Patient links in the report point to {{address}}."
+msgstr "Patient links in the report point to {{address}}."
+
+msgid ""
+"Patient links in the report point to {{address}}, the DHIS2 address the "
+"reporting service reads from, because no public DHIS2 address is configured."
+msgstr ""
+"Patient links in the report point to {{address}}, the DHIS2 address the "
+"reporting service reads from, because no public DHIS2 address is configured."
 
 msgid "Partner Report"
 msgstr "Partner Report"

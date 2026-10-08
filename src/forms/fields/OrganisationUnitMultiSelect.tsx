@@ -195,11 +195,12 @@ const OrganisationUnitMultiSelect: FC<OrganisationUnitMultiSelectProps> = ({
     }, [rows, excludeKey, selectedCodes, collapseWhenSingle])
 
     if (error) {
+        // The message follows the translated lead-in rather than filling a
+        // placeholder, which i18next would read again for placeholders and
+        // nesting.
         return (
             <NoticeBox error title={label}>
-                {i18n.t('Failed to load organisation units — {{message}}', {
-                    message: error.message,
-                })}
+                {`${i18n.t('Failed to load organisation units —')} ${error.message}`}
             </NoticeBox>
         )
     }

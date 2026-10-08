@@ -198,6 +198,8 @@ describe('validateValidationReport', () => {
         departmentFilter: [],
         rules: null,
         includeTestData: false,
+        applyValidationExceptions: true,
+        includeUnusedValidationExceptions: false,
         locale: '',
         outputFormat: 'html',
         ...over,

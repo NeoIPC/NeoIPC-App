@@ -17,6 +17,8 @@ export const validationReportWireFields = [
     'departmentFilter',
     'rules',
     'includeTestData',
+    'applyValidationExceptions',
+    'includeUnusedValidationExceptions',
 ] as const
 
 type ValidationReportNonWireKey = 'outputFormat' | 'locale'

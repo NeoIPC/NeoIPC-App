@@ -3,6 +3,7 @@ import React, { act } from 'react'
 import { createRoot, Root } from 'react-dom/client'
 import { useAuthorities } from '../authority/useAuthorities'
 import OrganisationUnitMultiSelect from './fields/OrganisationUnitMultiSelect'
+import { Dhis2PublicBaseUrlState, useDhis2PublicBaseUrl } from './useDhis2PublicBaseUrl'
 import { useReportConfig } from './useReportConfig'
 import { useValidationRules } from './useValidationRules'
 import ValidationReportForm, { ValidationReportFormValues } from './ValidationReportForm'
@@ -11,6 +12,7 @@ import ValidationReportForm, { ValidationReportFormValues } from './ValidationRe
 // test is what the form does with it.
 jest.mock('./useReportConfig', () => ({ useReportConfig: jest.fn() }))
 jest.mock('./useValidationRules', () => ({ useValidationRules: jest.fn() }))
+jest.mock('./useDhis2PublicBaseUrl', () => ({ useDhis2PublicBaseUrl: jest.fn() }))
 jest.mock('../authority/useAuthorities', () => ({ useAuthorities: jest.fn() }))
 jest.mock('./fields/OrganisationUnitMultiSelect', () => ({
     __esModule: true,
@@ -24,6 +26,9 @@ const mockedUseValidationRules = useValidationRules as jest.MockedFunction<
     typeof useValidationRules
 >
 const mockedUseAuthorities = useAuthorities as jest.MockedFunction<typeof useAuthorities>
+const mockedUseDhis2PublicBaseUrl = useDhis2PublicBaseUrl as jest.MockedFunction<
+    typeof useDhis2PublicBaseUrl
+>
 const mockedPicker = OrganisationUnitMultiSelect as unknown as jest.Mock
 
 const CATALOGUE = [
@@ -42,12 +47,15 @@ describe('ValidationReportForm', () => {
         isAdmin = false,
         locales = ['en'],
         localesError = null,
+        publicBaseUrl = { address: null, error: null },
     }: {
         isAdmin?: boolean
         locales?: string[] | null
         localesError?: Error | null
+        publicBaseUrl?: Dhis2PublicBaseUrlState
     } = {}): void => {
         mockedUseAuthorities.mockReturnValue({ has: () => true, isAdmin })
+        mockedUseDhis2PublicBaseUrl.mockReturnValue(publicBaseUrl)
         mockedUseReportConfig.mockReturnValue({
             presets: null,
             locales,
@@ -161,6 +169,57 @@ describe('ValidationReportForm', () => {
         renderForm({ isAdmin: true })
         openMoreOptions()
         expect(host.querySelector('input[name="includeTestData"]')).not.toBeNull()
+    })
+
+    it('offers the validation-exception switches to administrators only, and sends their defaults otherwise', () => {
+        renderForm({ isAdmin: false })
+        openMoreOptions()
+        expect(host.querySelector('input[name="applyValidationExceptions"]')).toBeNull()
+        expect(host.querySelector('input[name="includeUnusedValidationExceptions"]')).toBeNull()
+        // The address is an administrator's, so the form does not ask for it.
+        expect(mockedUseDhis2PublicBaseUrl).toHaveBeenCalledWith(false)
+        submit()
+        expect(onSubmit.mock.calls[0][0]).toMatchObject({
+            applyValidationExceptions: true,
+            includeUnusedValidationExceptions: false,
+        })
+    })
+
+    it('sends what an administrator chose for the validation-exception switches', () => {
+        renderForm({ isAdmin: true })
+        openMoreOptions()
+        expect(mockedUseDhis2PublicBaseUrl).toHaveBeenCalledWith(true)
+        click(find<HTMLInputElement>('input[name="applyValidationExceptions"]'))
+        click(find<HTMLInputElement>('input[name="includeUnusedValidationExceptions"]'))
+        submit()
+        expect(onSubmit.mock.calls[0][0]).toMatchObject({
+            applyValidationExceptions: false,
+            includeUnusedValidationExceptions: true,
+        })
+    })
+
+    it.each([
+        [true, 'Patient links in the report point to https://dhis.example/.'],
+        [
+            false,
+            'Patient links in the report point to http://dhis2:8080/, the DHIS2 address the reporting service reads from, because no public DHIS2 address is configured.',
+        ],
+    ])('shows an administrator the address patient links point to, configured: %p', (configured, text) => {
+        const publicBaseUrl = configured ? 'https://dhis.example/' : 'http://dhis2:8080/'
+        renderForm({ isAdmin: true, publicBaseUrl: { address: { publicBaseUrl, configured }, error: null } })
+        openMoreOptions()
+        expect(host.textContent).toContain(text)
+    })
+
+    it('says so when the address patient links point to could not be loaded', () => {
+        renderForm({
+            isAdmin: true,
+            publicBaseUrl: { address: null, error: new Error('404 Not Found') },
+        })
+        openMoreOptions()
+        expect(host.textContent).toContain(
+            'The address the patient links point to could not be loaded.'
+        )
     })
 
     it('sends the interface language for a blank report language when the report has it', () => {

@@ -68,6 +68,61 @@ describe('enrichError', () => {
         )
     })
 
+    // The service's detail is neoipcr's reason for refusing the file, the only
+    // place that says what to correct; it reaches the user as written, its
+    // quotation marks and line breaks included.
+    it('keeps the reason a validation-exception list was refused for', async () => {
+        const reason =
+            'The validation exception file "list.csv" does not hold exception records.\n✖ Missing column: DEPARTMENT_CODE.'
+        const err = await enrichError(
+            makeError(400, {
+                code: 'invalid-validation-exceptions',
+                title: 'Invalid validation exceptions',
+                detail: reason,
+            })
+        )
+        expect(err.message).toBe(`The validation exception list was not stored — ${reason}`)
+    })
+
+    // i18next reads an interpolated value again for placeholders and nesting,
+    // so a reason quoting a display name or a cell that looks like one would
+    // lose it, or repeat the reason in its place.
+    it('keeps a reason that holds placeholder or nesting syntax as written', async () => {
+        const reason =
+            'The validation exception file "{{reason}} $t(Upload)" does not hold exception records.\n✖ `ENROLMENT_DATE` holds 1 value that cannot be read as a date: {{x}}.'
+        const err = await enrichError(
+            makeError(400, {
+                code: 'invalid-validation-exceptions',
+                title: 'Invalid validation exceptions',
+                detail: reason,
+            })
+        )
+        expect(err.message).toBe(`The validation exception list was not stored — ${reason}`)
+    })
+
+    it('says a refused list is not valid when the service gives no reason', async () => {
+        const err = await enrichError(
+            makeError(400, {
+                code: 'invalid-validation-exceptions',
+                title: 'Invalid validation exceptions',
+            })
+        )
+        expect(err.message).toBe(
+            'The validation exception list was not stored, because it is not valid.'
+        )
+    })
+
+    it('asks for a reload when the DHIS2 session has ended', async () => {
+        const err = await enrichError(
+            makeError(401, {
+                code: 'missing-dhis2-session',
+                title: 'Missing DHIS2 session',
+                detail: 'The request carries no DHIS2 session cookie.',
+            })
+        )
+        expect(err.message).toBe('Your DHIS2 session has ended. Reload the page to sign in again.')
+    })
+
     it('prefers the mapped message over the backend title/detail', async () => {
         const err = await enrichError(
             makeError(400, {

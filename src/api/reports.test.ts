@@ -329,12 +329,32 @@ const validationValues = (
     departmentFilter: [],
     rules: null,
     includeTestData: false,
+    applyValidationExceptions: true,
+    includeUnusedValidationExceptions: false,
     locale: '',
     outputFormat: 'html',
     ...overrides,
 })
 
 describe('buildValidationReportQuery', () => {
+    // The service refuses a non-default value of either switch from a caller
+    // who is no administrator, by value, so both travel on every request.
+    it('sends both validation-exception switches, at their defaults too', () => {
+        const defaults = buildValidationReportQuery(validationValues(), 'html')
+        expect(defaults.get('applyValidationExceptions')).toBe('true')
+        expect(defaults.get('includeUnusedValidationExceptions')).toBe('false')
+
+        const chosen = buildValidationReportQuery(
+            validationValues({
+                applyValidationExceptions: false,
+                includeUnusedValidationExceptions: true,
+            }),
+            'pdf'
+        )
+        expect(chosen.get('applyValidationExceptions')).toBe('false')
+        expect(chosen.get('includeUnusedValidationExceptions')).toBe('true')
+    })
+
     it('leaves rules out when every rule is selected', () => {
         const qs = buildValidationReportQuery(validationValues(), 'html')
         expect(qs.has('rules')).toBe(false)

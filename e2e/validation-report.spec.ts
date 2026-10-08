@@ -76,10 +76,20 @@ test.describe('validation report', () => {
         expect(qs.getAll('departmentFilter')).toEqual(['AT_TEST_TEST'])
         // Every rule is selected, which the request leaves to the report.
         expect(qs.has('rules')).toBe(false)
+        // The validation-exception switches travel at their defaults, which the
+        // service accepts from a report user; any other value it refuses.
+        expect(qs.get('applyValidationExceptions')).toBe('true')
+        expect(qs.get('includeUnusedValidationExceptions')).toBe('false')
 
         const report = await expectRenderedReport(page)
-        // The header names the rules the document rests on.
+        // The header names the rules the document rests on, and says what became
+        // of the validation-exception list: applied if one is stored, the date
+        // of its upload coming first, and none otherwise. A regular expression
+        // is matched against the text as it stands, line breaks included.
         await expect(report).toContainText(/All \d+ rules/)
+        await expect(report).toContainText(
+            /Validation exceptions:\s*(List uploaded on [\s\S]*?)?(No exception list|Applied;)/
+        )
 
         // The report scrolls in the content pane, whose scrollbar reaches the
         // report's end only while the pane ends at the window's lower edge,
@@ -190,6 +200,15 @@ test.describe('validation report', () => {
         await page.getByRole('button', { name: 'More options' }).click()
         const ruleBoxes = page.locator('input[type="checkbox"][name^="rule-"]')
         await expect(ruleBoxes.first()).toBeVisible()
+        // The administrators' controls are not offered to a report user.
+        for (const name of [
+            'includeTestData',
+            'applyValidationExceptions',
+            'includeUnusedValidationExceptions',
+        ]) {
+            await expect(page.locator(`input[name="${name}"]`)).toHaveCount(0)
+        }
+        await expect(page.getByText('Patient links in the report point to')).toHaveCount(0)
         const count = await ruleBoxes.count()
         expect(count).toBeGreaterThan(1)
         for (let i = 0; i < count; i++) {
