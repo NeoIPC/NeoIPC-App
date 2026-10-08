@@ -276,13 +276,22 @@ const ValidationReportForm: FC<ValidationReportFormProps> = ({
                             label={i18n.t('Apply the validation exceptions')}
                             checked={values.applyValidationExceptions}
                             onChange={({ checked }) =>
-                                setField('applyValidationExceptions')(checked)
+                                // The appendix lists the records an applied list left unused, so
+                                // a report without the list has nothing to list: switching the
+                                // list off takes the appendix with it.
+                                setValues((prev) => ({
+                                    ...prev,
+                                    applyValidationExceptions: checked,
+                                    includeUnusedValidationExceptions:
+                                        checked && prev.includeUnusedValidationExceptions,
+                                }))
                             }
                         />
                         <CheckboxField
                             name="includeUnusedValidationExceptions"
                             label={i18n.t('Add an appendix of unused validation exceptions')}
                             checked={values.includeUnusedValidationExceptions}
+                            disabled={!values.applyValidationExceptions}
                             onChange={({ checked }) =>
                                 setField('includeUnusedValidationExceptions')(checked)
                             }

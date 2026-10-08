@@ -185,17 +185,36 @@ describe('ValidationReportForm', () => {
         })
     })
 
-    it('sends what an administrator chose for the validation-exception switches', () => {
+    it('sends the appendix an administrator asks for, with the list applied', () => {
         renderForm({ isAdmin: true })
         openMoreOptions()
         expect(mockedUseDhis2PublicBaseUrl).toHaveBeenCalledWith(true)
-        click(find<HTMLInputElement>('input[name="applyValidationExceptions"]'))
         click(find<HTMLInputElement>('input[name="includeUnusedValidationExceptions"]'))
         submit()
         expect(onSubmit.mock.calls[0][0]).toMatchObject({
-            applyValidationExceptions: false,
+            applyValidationExceptions: true,
             includeUnusedValidationExceptions: true,
         })
+    })
+
+    it('takes the appendix with the list when an administrator switches the list off', () => {
+        renderForm({ isAdmin: true })
+        openMoreOptions()
+        const appendix = () => find<HTMLInputElement>('input[name="includeUnusedValidationExceptions"]')
+        click(appendix())
+        expect(appendix().checked).toBe(true)
+        click(find<HTMLInputElement>('input[name="applyValidationExceptions"]'))
+        expect(appendix().checked).toBe(false)
+        expect(appendix().disabled).toBe(true)
+        submit()
+        expect(onSubmit.mock.calls[0][0]).toMatchObject({
+            applyValidationExceptions: false,
+            includeUnusedValidationExceptions: false,
+        })
+        // Switching the list back on offers the appendix again, unticked.
+        click(find<HTMLInputElement>('input[name="applyValidationExceptions"]'))
+        expect(appendix().disabled).toBe(false)
+        expect(appendix().checked).toBe(false)
     })
 
     it.each([

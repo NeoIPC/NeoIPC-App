@@ -67,9 +67,16 @@ test.describe('validation report, administrator controls', () => {
         await storeExceptionList(page)
         try {
             const { query, report } = await generate(page, async () => {
+                const appendix = page.locator('input[name="includeUnusedValidationExceptions"]')
+                await appendix.check()
                 await page.locator('input[name="applyValidationExceptions"]').uncheck()
+                // Without the list there is nothing for the appendix to list, so switching the
+                // list off clears the appendix too.
+                await expect(appendix).toBeDisabled()
+                await expect(appendix).not.toBeChecked()
             })
             expect(query.get('applyValidationExceptions')).toBe('false')
+            expect(query.get('includeUnusedValidationExceptions')).toBe('false')
             await expect(report).toContainText(
                 'Not applied; an administrator rendered this report without the exception list'
             )
