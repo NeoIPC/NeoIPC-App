@@ -10,6 +10,8 @@ Unreleased until it is versioned.
 
 ## [Unreleased]
 
+## [0.3.0-alpha] - 2026-10-09
+
 ### Added
 
 - Two administrator checkboxes on the Validation Report form, beside "Include test data": one renders
@@ -139,7 +141,8 @@ First published version.
   target languages hold a single translated label (German) in this version, so the interface is in
   practice English.
 
-[Unreleased]: https://github.com/NeoIPC/NeoIPC-App/compare/v0.2.0-alpha...HEAD
+[Unreleased]: https://github.com/NeoIPC/NeoIPC-App/compare/v0.3.0-alpha...HEAD
+[0.3.0-alpha]: https://github.com/NeoIPC/NeoIPC-App/compare/v0.2.0-alpha...v0.3.0-alpha
 [0.2.0-alpha]: https://github.com/NeoIPC/NeoIPC-App/compare/v0.1.0-alpha...v0.2.0-alpha
 [0.1.0-alpha]: https://github.com/NeoIPC/NeoIPC-App/compare/v0.0.1-alpha...v0.1.0-alpha
 [0.0.1-alpha]: https://github.com/NeoIPC/NeoIPC-App/releases/tag/v0.0.1-alpha
