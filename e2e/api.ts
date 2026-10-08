@@ -33,9 +33,19 @@ export const REFERENCE_DATA_CRUD_FIXTURE = path.join(
     'reference-data-crud.json'
 )
 export const PARTNER_DATA_FIXTURE = path.join(FIXTURES_DIR, 'partner-data.json')
+/** An exception list the reporting service's upload check accepts. */
 export const VALIDATION_EXCEPTIONS_FIXTURE = path.join(
     FIXTURES_DIR,
     'validation-exceptions.csv'
+)
+/**
+ * An exception list whose one record, for rule 1 in `AT_TEST_TEST`, names a
+ * patient the seed does not hold: it exempts nothing, so the Validation
+ * Report's appendix lists it as matching no record.
+ */
+export const UNMATCHED_VALIDATION_EXCEPTIONS_FIXTURE = path.join(
+    FIXTURES_DIR,
+    'validation-exceptions-unmatched.csv'
 )
 
 /**

@@ -14,15 +14,14 @@ export const validationExceptionsResource: AdminResourceType<AdminValidationExce
         title: () => i18n.t('Validation exceptions'),
         singular: () => i18n.t('validation exception file'),
         plural: () => i18n.t('Validation exception files'),
-        // Backend accepts any Content-Type and records it on the sidecar
-        // (validation-exception pipeline only consumes CSV today, but the
-        // server-side type bookkeeping is content-agnostic). Browser-detected
-        // MIME is forwarded as-is.
-        accept: 'text/csv,application/json,application/octet-stream',
+        // The service checks the content with neoipcr's reader, which reads
+        // a CSV file, whatever the type the browser detected; it records that
+        // type on the sidecar.
+        accept: '.csv,text/csv',
         uploadContentType: null,
         displayNameHelp: () =>
             i18n.t(
-                'Operator-facing label. Partners reference this file by ID when generating a report.'
+                'A label for administrators. The reports apply the stored list without showing its name.'
             ),
         extraColumns: [],
     }

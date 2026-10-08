@@ -4,7 +4,8 @@ Input files uploaded by the e2e suite.
 
 | File | Used by | State |
 |------|---------|-------|
-| `validation-exceptions.csv` | `admin-crud.spec.ts` (singleton upload/remove) | **Real.** Content is not parsed on upload, so a trivial CSV suffices. |
+| `validation-exceptions.csv` | `admin-crud.spec.ts` (singleton upload/remove) | **Real.** A valid exception list, which the reporting service checks with neoipcr on upload; its one record is otherwise unused. |
+| `validation-exceptions-unmatched.csv` | `validation-report-admin.spec.ts` (the list switched off, the appendix) | **Real.** A valid exception list with one patient-level record for rule 1 in `AT_TEST_TEST`, naming a patient the seed does not hold, so it exempts nothing and the appendix lists it as matching no record. |
 | `reference-data.json` | global setup (reuse-or-upload), `reference-report.spec.ts`, `admin-crud.spec.ts` (duplicate-rejection 409 test) | **Real.** A synthetic multi-department network benchmark captured from a seeded stack. |
 | `reference-data-crud.json` | `admin-crud.spec.ts` (reference-data list upload/delete) | **Derived** from `reference-data.json` (one metadata count bumped → valid but byte-distinct). The reporting service dedups identical content, so the CRUD upload needs a dataset the seed / global setup has **not** already stored; re-uploading `reference-data.json` itself is the 409 test. |
 | `partner-data.json` | `partner-report-data-file.spec.ts` | **Real.** A synthetic department dataset captured from a seeded stack. |

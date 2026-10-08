@@ -113,4 +113,41 @@ test.describe('admin CRUD', () => {
             page.getByText('No validation exception file uploaded.')
         ).toBeVisible()
     })
+
+    // The reporting service reads an upload with neoipcr before it stores it,
+    // and refuses a file that is no exception list with neoipcr's reason, the
+    // display name standing in for the path the file was staged at.
+    test('validation-exceptions singleton: a file that is no exception list is refused with its reason', async ({
+        page,
+    }) => {
+        const displayName = `e2e-valex-bad-${Date.now().toString(36)}`
+        try {
+            await gotoApp(page, '/admin/validation-exceptions')
+            await page.locator('input[name="displayName"]').fill(displayName)
+            await page.locator('input[name="file"]').setInputFiles({
+                name: 'not-an-exception-list.csv',
+                mimeType: 'text/csv',
+                buffer: Buffer.from('rule,orgUnit,period\n12,AT_TEST_TEST,2025\n'),
+            })
+            await page.getByRole('button', { name: /^(Upload|Replace)$/ }).click()
+
+            // @dhis2/ui's NoticeBox carries no role, only its test id.
+            const refusal = page
+                .locator('[data-test="dhis2-uicore-noticebox"]')
+                .filter({ hasText: 'Action failed' })
+            await expect(refusal).toContainText('The validation exception list was not stored —')
+            await expect(refusal).toContainText(`"${displayName}"`)
+            await expect(refusal).toContainText('Missing columns:')
+            // The current-file card does not show the refused file.
+            await expect(
+                page.getByText(displayName, { exact: true })
+            ).toHaveCount(0)
+        } finally {
+            // Were the file accepted, every later Partner Report render would
+            // fail on the stored list it cannot read.
+            const current = await page.request.get(`${NEOIPC_BASE}/admin/validation-exceptions`)
+            if (current.ok() && (await current.json()).displayName === displayName)
+                await page.request.delete(`${NEOIPC_BASE}/admin/validation-exceptions`)
+        }
+    })
 })

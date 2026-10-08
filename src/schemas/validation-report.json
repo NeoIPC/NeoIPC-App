@@ -15,6 +15,18 @@
       "type": "logical",
       "default": "false",
       "description": "Include the departments flagged as test units."
+    },
+    {
+      "name": "applyValidationExceptions",
+      "type": "logical",
+      "default": "true",
+      "description": "Apply the validation-exception list; false renders without it, and the\nreport\u0027s header says so. Administrators only: the reporting service\nrefuses false from other callers."
+    },
+    {
+      "name": "includeUnusedValidationExceptions",
+      "type": "logical",
+      "default": "false",
+      "description": "Add an appendix listing the exception records of the departments in\nscope that match no record, or match one but exempt nothing.\nAdministrators only: the reporting service refuses true from other\ncallers."
     }
   ]
 }

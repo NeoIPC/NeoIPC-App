@@ -19,10 +19,22 @@ interface ProblemBody {
  * UI — the app only offers advertised locales and already-fetched datasets —
  * so a clear message is the right level rather than highlighting a control
  * the user can barely reach. Returns `null` for an unknown code so the caller
- * falls back to the backend title/detail.
+ * falls back to the backend title/detail. A refused validation-exception
+ * list keeps the service's `detail`, neoipcr's reason, which names what to
+ * correct in the file.
  */
-const messageForCode = (code: string): string | null => {
+const messageForCode = (code: string, detail?: string): string | null => {
     switch (code) {
+        case 'invalid-validation-exceptions':
+            // The reason follows the translated lead-in rather than filling a
+            // placeholder: i18next reads an interpolated value again for
+            // placeholders and nesting, and the reason quotes the file's own
+            // values and its display name.
+            return detail
+                ? `${i18n.t('The validation exception list was not stored —')} ${detail}`
+                : i18n.t('The validation exception list was not stored, because it is not valid.')
+        case 'missing-dhis2-session':
+            return i18n.t('Your DHIS2 session has ended. Reload the page to sign in again.')
         case 'missing-unit-codes':
             return i18n.t('Select at least one department.')
         case 'missing-partner-data-body':
@@ -108,7 +120,7 @@ export const enrichError = async (err: unknown): Promise<Error> => {
     }
 
     if (body?.code) {
-        const mapped = messageForCode(body.code)
+        const mapped = messageForCode(body.code, body.detail)
         if (mapped) return new Error(mapped)
     }
 

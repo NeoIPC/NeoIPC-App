@@ -51,7 +51,7 @@ export const adminList = async <T extends AdminResourceMetadata>(
  * reference-data, which the reporting service refuses with 415 unless the
  * request carries `Content-Type: application/json`. Pass `null` to let the
  * browser send the file's own type — the validation-exception endpoint
- * accepts any.
+ * accepts any type and checks the content itself.
  */
 export const adminUpload = async <T extends AdminResourceMetadata>(
     baseUrl: string,
@@ -113,9 +113,10 @@ export const adminDownloadUrl = (
 ): string => neoipcReportingUrl(baseUrl, adminPath(segment, id))
 
 // --- Singleton resources (one file at a time; no id segment) -----------
-// The validation-exception file is a single, auto-applied resource, so its
-// admin API is `GET` (current metadata, or 404) / `PUT` (upload-replace) /
-// `DELETE` — see ValidationExceptionEndpoints.cs.
+// The validation-exception file is a single stored resource, so its admin
+// API is `GET` (current metadata, or 404) / `PUT` (upload-replace, refused
+// with 400 when the file is not a valid list) / `DELETE` — see
+// ValidationExceptionEndpoints.cs.
 
 /**
  * `GET /admin/<segment>` for a singleton resource. Returns the current
@@ -169,6 +170,30 @@ export const adminPutSingle = async <T extends AdminResourceMetadata>(
         }
     )
     return (await response.json()) as T
+}
+
+/**
+ * Backend wire shape from {@link NeoIPC.Reporting.AdminDhis2PublicBaseUrl}:
+ * the address the reports' links to DHIS2 are built on, as the reporting
+ * service read it when it started.
+ */
+export interface AdminDhis2PublicBaseUrl {
+    /** The base of the reports' links to DHIS2. */
+    publicBaseUrl: string
+    /** `true` when it is the configured public address; `false` when none is
+     *  configured and the service links to the DHIS2 address it reads from. */
+    configured: boolean
+}
+
+/** `GET /admin/dhis2-public-base-url`. */
+export const adminGetDhis2PublicBaseUrl = async (
+    baseUrl: string
+): Promise<AdminDhis2PublicBaseUrl> => {
+    const response = await fetchNeoipcReporting(baseUrl, '/admin/dhis2-public-base-url', {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+    })
+    return (await response.json()) as AdminDhis2PublicBaseUrl
 }
 
 /**

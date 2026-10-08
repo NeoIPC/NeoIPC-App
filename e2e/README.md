@@ -17,8 +17,9 @@ DHIS2 origin — production fidelity, not the `yarn start:dev` proxy.
 | `partner-report-json` | The JSON output round trip: download the department dataset the Partner Report is computed from, feed it back through the upload path, and get a report out — the one assertion that catches the R producer and the Quarto consumer drifting apart. |
 | `reference-report` | Render a stored reference dataset, both formats. *(needs a real fixture)* |
 | `reference-report-live-fetch` | The admin-only live-fetch filters, which the report-only persona never sees: that "Include test data" admits `TEST_UNITS` departments to the Departments picker only when checked, and that it and the department selection reach the request. *(runs with or without a stored dataset: with none, the dataset picker gives way to a notice and the form is already in live mode)* |
-| `validation-report` | Render for `AT_TEST_TEST`: HTML mounts `#neoipc-rendered-report` from a request carrying that department alone and no `rules`, since every rule is selected, and the report's header says "All N rules"; the content pane ends at or above the window's lower edge, and every screenshot fits the report's width; following a reference to a problem's details leaves the URL alone and focuses the details; every patient's Tracker Capture link points at the origin the suite runs on and is marked to open in a new tab, and a click on one opens exactly one new page at its address while the app keeps its URL and the report; PDF triggers a `NeoIPC-Surveillance-Validation-Report_<timestamp>.pdf` download; unchecking one rule sends every other rule and leaves that one out. |
-| `admin-crud` | reference-data list (upload → row → delete); validation-exceptions singleton (upload → current file → remove). |
+| `validation-report` | Render for `AT_TEST_TEST`: HTML mounts `#neoipc-rendered-report` from a request carrying that department alone, no `rules`, since every rule is selected, and both validation-exception switches at their defaults, and the report's header says "All N rules" and what became of the exception list; the report user is offered none of the administrators' controls; the content pane ends at or above the window's lower edge, and every screenshot fits the report's width; following a reference to a problem's details leaves the URL alone and focuses the details; every patient's Tracker Capture link points at the origin the suite runs on and is marked to open in a new tab, and a click on one opens exactly one new page at its address while the app keeps its URL and the report; PDF triggers a `NeoIPC-Surveillance-Validation-Report_<timestamp>.pdf` download; unchecking one rule sends every other rule and leaves that one out. |
+| `validation-report-admin` | The administrators' controls, as the superadmin: with the fixture exception list stored, a render without it says so in the header with the list's upload date, and a render with the appendix lists the fixture's record as matching nothing; the "More options" note names the address patient links point to, this page's origin. Each test that stores the list removes it. |
+| `admin-crud` | reference-data list (upload → row → delete); validation-exceptions singleton (upload → current file → remove), and a file that is no exception list refused with neoipcr's reason. |
 | `locale-switch` | `keyUiLocale=de` + reload flips the translated nav label. |
 | `a11y` | axe-core (WCAG 2.1 A + AA) over the main routes per persona, tolerating only known `@dhis2/ui` component defects. Chromium only — axe evaluates the DOM, which is identical across engines. |
 
@@ -44,9 +45,11 @@ DHIS2 origin — production fidelity, not the `yarn start:dev` proxy.
    bundle** into DHIS2 and asserts the seed is present; it does not seed.
    The validation-report spec also needs `AT_TEST_TEST` to have a validation
    finding, which the play data's `E2E-TC-FIXTURE` supplies with its open
-   enrolment (neoipcr's rule 43), and the reporting service's
-   `Reporting:Dhis2PublicBaseUrl` to be the origin of `DHIS2_BASE_URL`, since
-   it checks that the patients' Tracker Capture links point there.
+   enrolment (neoipcr's rule 43, a warning the report lists like any
+   finding). The validation-report and validation-report-admin specs need the
+   reporting service's `Reporting:Dhis2PublicBaseUrl` to be the origin of
+   `DHIS2_BASE_URL`, since they check that the patients' Tracker Capture
+   links, and the administrators' note on them, point there.
 3. **A built bundle** at `build/bundle/NeoIPC-<version>.zip` (`yarn build`).
 
 ## Auth model
