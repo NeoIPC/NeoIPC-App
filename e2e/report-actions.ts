@@ -1,8 +1,61 @@
-import { expect, type Page, type Locator, type Download } from '@playwright/test'
+import {
+    errors,
+    expect,
+    test,
+    type Page,
+    type Locator,
+    type Download,
+} from '@playwright/test'
 import { appUrl } from './api'
 
-/** Generous ceiling for a backend (Quarto/R) render. */
+/**
+ * How long a render helper waits for a backend (Quarto/R) render. It outlasts the
+ * longest render the reporting service allows, which ends a Partner Report request
+ * after 10 minutes and a Reference or Validation Report request after 6 with an
+ * error the app shows as its failure panel, so a render the service gives up on
+ * ends the wait there, and only a response that never reaches the browser runs it
+ * out.
+ */
 export const RENDER_TIMEOUT = 12 * 60 * 1000
+
+/**
+ * Give a render wait time of its own. Playwright ends a test at its own timeout
+ * whatever a wait inside it asks for, and `playwright.config.ts` keeps that short
+ * so that a browser-side hang fails fast, while a render can take longer than a
+ * test has left: a Partner Report PDF takes the reporting service over a minute in
+ * CI. `test.setTimeout()` during a test moves that test's deadline
+ * (`TimeoutManager.setTimeout` in Playwright), so the test's timeout grows by the
+ * wait's own, or is lifted for a wait without one (0), and once the wait settles it
+ * is its earlier value plus the time the wait took, so that the rest of the test
+ * keeps the time it had left. A test without a timeout (0) keeps none.
+ */
+async function withRenderTime<T>(
+    timeout: number,
+    wait: () => Promise<T>
+): Promise<T> {
+    const before = test.info().timeout
+    if (before === 0) {
+        return wait()
+    }
+    const started = Date.now()
+    test.setTimeout(timeout === 0 ? 0 : before + timeout)
+    try {
+        return await wait()
+    } finally {
+        test.setTimeout(before + (Date.now() - started))
+    }
+}
+
+/**
+ * A wait that ran out, as the outcome the helpers report; every other failure,
+ * such as a page that closed, is thrown on as it is.
+ */
+function timedOut(error: unknown): 'timeout' {
+    if (error instanceof errors.TimeoutError) {
+        return 'timeout'
+    }
+    throw error
+}
 
 /**
  * Wait for an HTML render to finish, failing fast (and clearly) if the app shows
@@ -16,23 +69,27 @@ export async function expectRenderedReport(
 ): Promise<Locator> {
     const report = page.locator('#neoipc-rendered-report')
     const failure = page.getByText('Report rendering failed')
-    const which = await Promise.race([
-        report
-            .waitFor({ state: 'visible', timeout })
-            .then(() => 'report' as const)
-            .catch(() => 'timeout' as const),
-        failure
-            .waitFor({ state: 'visible', timeout })
-            .then(() => 'failed' as const)
-            .catch(() => 'timeout' as const),
-    ])
+    const which = await withRenderTime(timeout, () =>
+        Promise.race([
+            report
+                .waitFor({ state: 'visible', timeout })
+                .then(() => 'report' as const)
+                .catch(timedOut),
+            failure
+                .waitFor({ state: 'visible', timeout })
+                .then(() => 'failed' as const)
+                .catch(timedOut),
+        ])
+    )
     if (which === 'failed') {
         throw new Error(
             'Report render failed — the app showed the "Report rendering failed" panel.'
         )
     }
     if (which === 'timeout') {
-        throw new Error('Report render did not complete within the timeout.')
+        throw new Error(
+            `Report render did not complete within ${timeout / 1000} s.`
+        )
     }
     return report
 }
@@ -48,24 +105,26 @@ export async function expectDownload(
     timeout = RENDER_TIMEOUT
 ): Promise<Download> {
     const failure = page.getByText('Report rendering failed')
-    const downloadPromise = page.waitForEvent('download', { timeout })
-    await trigger()
-    const outcome = await Promise.race([
-        downloadPromise
-            .then((download) => ({ kind: 'download' as const, download }))
-            .catch(() => ({ kind: 'timeout' as const })),
-        failure
-            .waitFor({ state: 'visible', timeout })
-            .then(() => ({ kind: 'failed' as const }))
-            .catch(() => ({ kind: 'timeout' as const })),
-    ])
+    const outcome = await withRenderTime(timeout, async () => {
+        const downloadPromise = page.waitForEvent('download', { timeout })
+        await trigger()
+        return Promise.race([
+            downloadPromise
+                .then((download) => ({ kind: 'download' as const, download }))
+                .catch((error: unknown) => ({ kind: timedOut(error) })),
+            failure
+                .waitFor({ state: 'visible', timeout })
+                .then(() => ({ kind: 'failed' as const }))
+                .catch((error: unknown) => ({ kind: timedOut(error) })),
+        ])
+    })
     if (outcome.kind === 'failed') {
         throw new Error(
             'Render failed — the app showed the "Report rendering failed" panel.'
         )
     }
     if (outcome.kind === 'timeout') {
-        throw new Error('Download did not fire within the timeout.')
+        throw new Error(`Download did not fire within ${timeout / 1000} s.`)
     }
     return outcome.download
 }
