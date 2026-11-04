@@ -97,7 +97,9 @@ export async function expectRenderedReport(
 /**
  * Trigger a render whose result downloads rather than mounting inline (PDF, or
  * the JSON dataset) and return the download, failing fast if the app shows the
- * "Report rendering failed" panel instead of firing one.
+ * "Report rendering failed" panel instead of firing one. The trigger keeps the
+ * test's own timeout, so that a button that cannot be clicked fails as any other
+ * step does; only the wait after it has a render's time.
  */
 export async function expectDownload(
     page: Page,
@@ -105,19 +107,24 @@ export async function expectDownload(
     timeout = RENDER_TIMEOUT
 ): Promise<Download> {
     const failure = page.getByText('Report rendering failed')
-    const outcome = await withRenderTime(timeout, async () => {
-        const downloadPromise = page.waitForEvent('download', { timeout })
-        await trigger()
-        return Promise.race([
-            downloadPromise
-                .then((download) => ({ kind: 'download' as const, download }))
-                .catch((error: unknown) => ({ kind: timedOut(error) })),
+    // Awaited from before the trigger, which may start the download at once.
+    const downloaded = page
+        .waitForEvent('download', { timeout })
+        .then((download) => ({ kind: 'download' as const, download }))
+        .catch((error: unknown) => ({ kind: timedOut(error) }))
+    // Observed at once, so that a failure while the trigger runs is not reported
+    // as unhandled; the race below reads the outcome.
+    void downloaded.catch(() => undefined)
+    await trigger()
+    const outcome = await withRenderTime(timeout, () =>
+        Promise.race([
+            downloaded,
             failure
                 .waitFor({ state: 'visible', timeout })
                 .then(() => ({ kind: 'failed' as const }))
                 .catch((error: unknown) => ({ kind: timedOut(error) })),
         ])
-    })
+    )
     if (outcome.kind === 'failed') {
         throw new Error(
             'Render failed — the app showed the "Report rendering failed" panel.'
