@@ -29,10 +29,17 @@ const DEVICE: Record<(typeof ENGINES)[number], string> = {
 
 export default defineConfig({
     testDir: './e2e',
-    // The backend renders (Quarto/R via NeoIPC-Reporting) complete in ~10-30 s, so
-    // 90 s is ample headroom while letting a browser-side hang fail fast (with a
-    // retained trace) instead of stalling the whole suite for 15 min.
+    // 90 s lets a browser-side hang fail fast, with a retained trace. A backend
+    // render (Quarto/R via NeoIPC-Reporting) can take longer than a test has
+    // left, so the render helpers in e2e/report-actions.ts give their wait time
+    // of its own, up to RENDER_TIMEOUT, and the rest of the test keeps its 90 s.
     timeout: 90 * 1000,
+    // In CI, the whole suite stops after an hour, so that renders that hang
+    // test after test, each of which may wait up to RENDER_TIMEOUT, end the run
+    // with its report rather than outlast the CI job running it. A run stopped
+    // so skips its global teardown, which a CI stack, discarded with its job,
+    // does not need.
+    globalTimeout: process.env.CI ? 60 * 60 * 1000 : 0,
     expect: { timeout: 30 * 1000 },
     // One worker, no intra-file parallelism: every engine shares one DHIS2
     // substrate and the singleton validation-exceptions resource, so admin

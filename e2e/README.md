@@ -89,9 +89,12 @@ Environment (all have defaults for the local stack):
 
 The three engines run **serially** (`workers: 1`): every engine shares one DHIS2
 substrate and the singleton validation-exceptions resource, so admin CRUD is the
-binding constraint. Each test, its render included, must finish within the
-90-second test timeout `playwright.config.ts` sets; the render helpers' own
-12-minute ceiling (`RENDER_TIMEOUT` in `report-actions.ts`) does not extend it.
+binding constraint. Each test must finish within the 90-second test timeout
+`playwright.config.ts` sets, but for its render waits: a render can take longer
+than a test has left, so a render helper in `report-actions.ts` gives its wait
+time of its own, up to `RENDER_TIMEOUT` (12 minutes, longer than the reporting
+service lets a render run), and the rest of the test keeps the time it had. In
+CI, the whole suite stops after an hour.
 
 ## Fixtures
 

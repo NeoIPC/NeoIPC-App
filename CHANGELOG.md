@@ -10,6 +10,13 @@ Unreleased until it is versioned.
 
 ## [Unreleased]
 
+### Fixed
+
+- The end-to-end suite's render tests wait for a render as long as their render helpers do: the suite's
+  90-second test timeout cut that wait short, and a Partner Report PDF, which the reporting service takes
+  over a minute to render in CI, failed its test while it was still rendering. The rest of a test keeps
+  the 90 seconds, and in CI the whole suite stops after an hour.
+
 ## [0.3.0-alpha] - 2026-10-09
 
 ### Added
